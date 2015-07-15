@@ -3,9 +3,13 @@ package com.thesis.application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.NetworkInfo;
+import android.net.NetworkRequest;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 
-import java.nio.channels.Channel;
+import com.thesis.application.fragments.DeviceDetailFragment;
+import com.thesis.application.fragments.DeviceListFragment;
 
 /**
  * Created by bahar61119 on 7/12/2015.
@@ -35,18 +39,36 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
             int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,-1);
             if(state == WifiP2pManager.WIFI_P2P_STATE_ENABLED){
                 //wifi p2p is enable
+                activity.setIsWifiP2pEnabled(true);
             }else{
                 //wifi p2p is not enable
+                activity.setIsWifiP2pEnabled(false);
+                activity.resetData();
+
             }
 
         }else if(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)){
             if(manager!=null){
-                manager.requestPeers(channel,peerListListener);
+                manager.requestPeers(channel,(WifiP2pManager.PeerListListener) activity.getFragmentManager().findFragmentById(R.id.fragmentDeviceList));
             }
 
         }else if(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)){
+            if(manager == null){
+                return;
+            }
+
+            NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+
+            if(networkInfo.isConnected()){
+                DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) activity.getFragmentManager().findFragmentById(R.id.fragmentDeviceDetail);
+                manager.requestConnectionInfo(channel,deviceDetailFragment);
+            }else{
+                activity.resetData();
+            }
 
         }else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
+            DeviceListFragment deviceListFragment =(DeviceListFragment) activity.getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+            deviceListFragment.updateThisDevice((WifiP2pDevice)intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
 
         }
 
