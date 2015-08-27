@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.thesis.application.R;
 import com.thesis.application.ThesisActivity;
+import com.thesis.application.asynctask.FileServerAsyncTask;
 import com.thesis.application.interfaces.DeviceActionListener;
 
 import java.io.IOException;
@@ -98,6 +99,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         textView.setText("Group Owner IP: "+ info.groupOwnerAddress.getHostAddress());
 
         if(info.groupFormed && info.isGroupOwner){
+            new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText)).execute();
 
         }else if(info.groupFormed){
             contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
