@@ -3,6 +3,7 @@ package com.thesis.application.fragments;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -17,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.thesis.application.FileTransferService;
 import com.thesis.application.R;
 import com.thesis.application.ThesisActivity;
 import com.thesis.application.asynctask.FileServerAsyncTask;
@@ -31,7 +33,7 @@ import java.io.OutputStream;
  */
 public class DeviceDetailFragment extends Fragment implements WifiP2pManager.ConnectionInfoListener {
 
-
+    protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     ProgressDialog progressDialog = null;
     private View contentView = null;
     private WifiP2pDevice device = null;
@@ -71,7 +73,11 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         contentView.findViewById(R.id.btnGallery).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getActivity(),"Not Implemented",Toast.LENGTH_LONG).show();
+                //Toast.makeText(getActivity(),"Not Implemented",Toast.LENGTH_LONG).show();
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE );
             }
         });
 
@@ -80,7 +86,18 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        //super.onActivityResult(requestCode, resultCode, data);
+
+        Uri uri = data.getData();
+        TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
+        statusText.setText("Sending: "+ uri);
+        Log.d(ThesisActivity.TAG, "Intent--------" +uri);
+        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, info.groupOwnerAddress.getHostAddress());
+        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, "8988");
+        getActivity().startActivity(serviceIntent);
     }
 
     @Override
