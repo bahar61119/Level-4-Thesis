@@ -10,6 +10,7 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,10 @@ import android.widget.Toast;
 import com.thesis.application.R;
 import com.thesis.application.ThesisActivity;
 import com.thesis.application.interfaces.DeviceActionListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Created by bahar61119 on 7/15/2015.
@@ -126,4 +131,27 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         contentView.findViewById(R.id.btnGallery).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
     }
+
+    public static boolean copyFile(InputStream inputStream, OutputStream outputStream){
+        byte buf[] = new byte[1024];
+        int len;
+        long startTime = System.currentTimeMillis();
+
+        try{
+            while ((len = inputStream.read()) != -1){
+                outputStream.write(buf, 0, len);
+            }
+            outputStream.close();
+            inputStream.close();
+            long endTime = System.currentTimeMillis() - startTime;
+            Log.v(ThesisActivity.TAG, "Time taken to transfer: "+ endTime);
+
+        }catch (IOException e){
+            Log.d(ThesisActivity.TAG, e.toString());
+            return false;
+        }
+        return true;
+    }
+
+
 }

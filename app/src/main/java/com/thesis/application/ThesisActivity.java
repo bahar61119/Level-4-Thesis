@@ -26,6 +26,7 @@ import com.thesis.application.interfaces.DeviceActionListener;
  */
 public class ThesisActivity extends Activity implements WifiP2pManager.ChannelListener, DeviceActionListener{
 
+    public static final String TAG = "thesisWifiDirect";
     private WifiP2pManager manager;
     private WifiP2pManager.Channel channel;
     private BroadcastReceiver receiver;
