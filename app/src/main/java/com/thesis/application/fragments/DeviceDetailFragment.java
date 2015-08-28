@@ -96,8 +96,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
         serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
         serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, info.groupOwnerAddress.getHostAddress());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, "8988");
-        getActivity().startActivity(serviceIntent);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+        getActivity().startService(serviceIntent);
     }
 
     @Override
@@ -151,21 +151,21 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         this.getView().setVisibility(View.GONE);
     }
 
-    public static boolean copyFile(InputStream inputStream, OutputStream outputStream){
+    public static boolean copyFile(InputStream inputStream, OutputStream out) {
         byte buf[] = new byte[1024];
         int len;
-        long startTime = System.currentTimeMillis();
+        long startTime=System.currentTimeMillis();
 
-        try{
-            while ((len = inputStream.read()) != -1){
-                outputStream.write(buf, 0, len);
+        try {
+            while ((len = inputStream.read(buf)) != -1) {
+                out.write(buf, 0, len);
             }
-            outputStream.close();
+            out.close();
             inputStream.close();
-            long endTime = System.currentTimeMillis() - startTime;
-            Log.v(ThesisActivity.TAG, "Time taken to transfer: "+ endTime);
+            long endTime=System.currentTimeMillis()-startTime;
+            Log.v("","Time taken to transfer all bytes is : "+endTime);
 
-        }catch (IOException e){
+        } catch (IOException e) {
             Log.d(ThesisActivity.TAG, e.toString());
             return false;
         }
