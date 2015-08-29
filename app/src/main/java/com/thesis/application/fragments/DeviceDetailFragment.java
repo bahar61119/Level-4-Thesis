@@ -12,6 +12,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,7 +44,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     ProgressDialog progressDialog = null;
-    private static ProgressDialog staticProgressDialog;
+    public static ProgressDialog staticProgressDialog;
     private View contentView = null;
     private WifiP2pDevice device = null;
     private WifiP2pInfo info;
@@ -165,6 +166,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             serviceIntent.putExtra(FileTransferService.FileLength, ActualFileLength+"");
             serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
             if(host != null && subPort != -1){
+                showProgress("Sending...");
                 getActivity().startService(serviceIntent);
             }else{
                 dismissProgressDialog();
@@ -217,7 +219,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             ((TextView)contentView.findViewById(R.id.tvStatusText)).setText(getResources().getString(R.string.client_text));
 
             if(!ClientCheck){
-                FirstConnectionMessageAsyncTask firstConnectionMessageAsyncTask = new FirstConnectionMessageAsyncTask();
+                FirstConnectionMessageAsyncTask firstConnectionMessageAsyncTask = new FirstConnectionMessageAsyncTask(getActivity());
                 if(firstConnectionMessageAsyncTask != null){
                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
                         firstConnectionMessageAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{null});
@@ -270,15 +272,34 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         SharedPreferencesHandler.setStringValues(getActivity(),"ServerBoolean","");
     }
 
-    public static boolean copyFile(InputStream inputStream, OutputStream out) {
-        byte buf[] = new byte[1024];
+    public static boolean copyFile(InputStream inputStream, OutputStream out, Long length) {
+        byte buf[] = new byte[FileTransferService.ByteSize];
         int len;
+        long total = 0;
         long startTime=System.currentTimeMillis();
 
         try {
             while ((len = inputStream.read(buf)) != -1) {
                 out.write(buf, 0, len);
             }
+
+            try {
+                total += len;
+
+                if(length>0){
+                    Percentage = (int) ((total*100)/ length);
+                }
+
+                staticProgressDialog.setProgress(Percentage);
+
+            }catch (Exception e){
+                e.printStackTrace();
+                Percentage = 0;
+                ActualFileLength = 0;
+            }
+
+            dismissProgressDialog();
+
             out.close();
             inputStream.close();
             long endTime=System.currentTimeMillis()-startTime;
@@ -291,8 +312,38 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         return true;
     }
 
-    public static void dismissProgressDialog(){
+    public void showProgress(final String task) {
+        if (staticProgressDialog == null) {
+            staticProgressDialog = new ProgressDialog(getActivity(),
+                    ProgressDialog.THEME_HOLO_LIGHT);
+        }
+        Handler handle = new Handler();
+        final Runnable s = new Runnable() {
 
+            public void run() {
+                staticProgressDialog.setMessage(task);
+                staticProgressDialog.setIndeterminate(false);
+                staticProgressDialog.setMax(100);
+                staticProgressDialog.setProgressNumberFormat(null);
+                staticProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                staticProgressDialog.show();
+            }
+        };
+        handle.post(s);
+    }
+
+
+
+    public static void dismissProgressDialog(){
+        try{
+            if(staticProgressDialog != null){
+                if(staticProgressDialog.isShowing()){
+                    staticProgressDialog.dismiss();
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 

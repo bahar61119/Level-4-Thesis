@@ -94,7 +94,7 @@ public class FileTransferService extends IntentService {
                     Log.d(ThesisActivity.TAG, e.toString());
                 }
 
-                DeviceDetailFragment.copyFile(is, stream);
+                DeviceDetailFragment.copyFile(is, stream, DeviceDetailFragment.ActualFileLength);
                 Log.d(ThesisActivity.TAG, "Client: Data written");
 
                 objectOutputStream.close();

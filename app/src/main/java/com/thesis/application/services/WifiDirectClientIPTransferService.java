@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.thesis.application.activities.ThesisActivity;
+import com.thesis.application.serializable.WifiTransferSerializable;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class WifiDirectClientIPTransferService extends IntentService {
 
 
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-                WifiDirectClientIPTransferService transferObject = new WifiDirectClientIPTransferService(inetAddress);
+                WifiTransferSerializable transferObject = new WifiTransferSerializable(inetAddress);
 
                 objectOutputStream.writeObject(transferObject);
 
