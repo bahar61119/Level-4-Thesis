@@ -141,7 +141,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIP");
+        String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIp");
+        //String clientIP = ClientIP;
+        Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
+
         String ownerIP = SharedPreferencesHandler.getStringValue(getActivity(), "GroupOwnerAddress");
 
         if(ownerIP != null && ownerIP.length()>0){
@@ -155,6 +158,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                     host = clientIP;
                     subPort = FileTransferService.PORT;
                     serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
+                    Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
                 }
             }else{
                 host = ownerIP;
@@ -170,13 +174,13 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 getActivity().startService(serviceIntent);
             }else{
                 dismissProgressDialog();
-                Toast.makeText(getActivity(),"Host address not found. Please Re-connect.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(),"Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
             }
 
 
         }else{
             dismissProgressDialog();
-            Toast.makeText(getActivity(),"Host address not found. Please Re-connect.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(),"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,46 +201,67 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         textView = (TextView) contentView.findViewById(R.id.tvGroupIp);
         textView.setText("Group Owner IP: "+ info.groupOwnerAddress.getHostAddress());
 
-        String groupOwner = info.groupOwnerAddress.getHostAddress();
+        try {
+            String GroupOwner = info.groupOwnerAddress.getHostAddress();
+            if(GroupOwner!=null && !GroupOwner.equals("")) SharedPreferencesHandler.setStringValues(getActivity(),
+                    "GroupOwnerAddress", GroupOwner);
+            contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
+            if (info.groupFormed && info.isGroupOwner) {
+        	/*
+        	 * set shaerdprefrence which remember that device is server.
+        	 */
+                SharedPreferencesHandler.setStringValues(getActivity(),
+                        "ServerBoolean", "true");
 
-        if(groupOwner != null && !groupOwner.equals("")) SharedPreferencesHandler.setStringValues(getActivity(), "GroupOwnerAddress", groupOwner);
-        contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
-
-        if(info.groupFormed && info.isGroupOwner){
-
-            SharedPreferencesHandler.setStringValues(getActivity(),"ServerBoolean", "true");
-
-            FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
-            if(fileServerAsyncTask!= null){
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                    fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
-                }else{
-                    fileServerAsyncTask.execute();
-                }
-            }
-
-        }else if(info.groupFormed){
-            ((TextView)contentView.findViewById(R.id.tvStatusText)).setText(getResources().getString(R.string.client_text));
-
-            if(!ClientCheck){
-                FirstConnectionMessageAsyncTask firstConnectionMessageAsyncTask = new FirstConnectionMessageAsyncTask(getActivity());
-                if(firstConnectionMessageAsyncTask != null){
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                        firstConnectionMessageAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{null});
-                    }else{
-                        firstConnectionMessageAsyncTask.execute();
+            /*new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
+                    .execute();*/
+                FileServerAsyncTask FileServerobj = new FileServerAsyncTask(
+                        getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+                if (FileServerobj != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        FileServerobj.executeOnExecutor(
+                                AsyncTask.THREAD_POOL_EXECUTOR,
+                                new String[] { null });
+                        // FileServerobj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,Void);
                     }
+                    else
+                        FileServerobj.execute();
                 }
             }
+            else  {
+                // The other device acts as the client. In this case, we enable the
+                // get file button.
+//            mContentView.findViewById(R.id.btn_start_client).setVisibility(View.VISIBLE);
+//            ((TextView) mContentView.findViewById(R.id.status_text)).setText(getResources()
+//                    .getString(R.string.client_text));
+                //if (!ClientCheck) {
+                    FirstConnectionMessageAsyncTask firstObj = new FirstConnectionMessageAsyncTask(getActivity());
+                    if (firstObj != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                            firstObj.executeOnExecutor(
+                                    AsyncTask.THREAD_POOL_EXECUTOR,
+                                    new String[] { null });
+                        } else
+                            firstObj.execute();
+                    }
+                //}
 
-            FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
-            if(fileServerAsyncTask!= null){
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                    fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
-                }else{
-                    fileServerAsyncTask.execute();
+                FileServerAsyncTask FileServerobj = new FileServerAsyncTask(
+                        getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+                if (FileServerobj != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        FileServerobj.executeOnExecutor(
+                                AsyncTask.THREAD_POOL_EXECUTOR,
+                                new String[] { null });
+                    }
+                    else
+                        FileServerobj.execute();
+
                 }
+
             }
+        }
+        catch(Exception e){
 
         }
 

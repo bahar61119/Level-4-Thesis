@@ -4,45 +4,46 @@ package com.thesis.application.serializable;
  * Created by bahar61119 on 8/28/2015.
  */
 public class WifiTransferSerializable implements java.io.Serializable{
-    private String fileName;
-    private Long fileLength;
-    private String inetAddress;
+    private String FileName;
+    private Long FileLength;
+    private String InetAddress;
 
-    public WifiTransferSerializable(){}
-    public WifiTransferSerializable(String inetAddress){
-        this.inetAddress = inetAddress;
-    }
-    public WifiTransferSerializable(String fileName, Long fileLength){
-        this.fileName = fileName;
-        this.fileLength = fileLength;
-    }
-    public WifiTransferSerializable(String fileName, Long fileLength , String inetAddress){
-        this.fileName = fileName;
-        this.fileLength = fileLength;
-        this.inetAddress = inetAddress;
+
+    public WifiTransferSerializable(){
+
     }
 
-    public String getInetAddress(){
-        return inetAddress;
+    public WifiTransferSerializable(String inetaddress){
+        this.InetAddress = inetaddress;
     }
 
-    public void setInetAddress(String inetAddress){
-        this.inetAddress = inetAddress;
+    public WifiTransferSerializable(String name, Long filelength){
+        this.FileName = name;
+        this.FileLength = filelength;
+//		this.FileData = in;
     }
 
-    public Long getFileLength(){
-        return fileLength;
+    public String getInetAddress() {
+        return InetAddress;
     }
 
-    public void setFileLength(Long fileLength){
-        this.fileLength = fileLength;
+    public void setInetAddress(String inetAddress) {
+        InetAddress = inetAddress;
     }
 
-    public String getFileName(){
-        return fileName;
+
+    public Long getFileLength() {
+        return FileLength;
+    }
+    public void setFileLength(Long fileLength) {
+        FileLength = fileLength;
     }
 
-    public void setFileName(String fileName){
-        this.fileName = fileName;
+    public String getFileName() {
+        return FileName;
     }
+    public void setFileName(String fileName) {
+        FileName = fileName;
+    }
+
 }

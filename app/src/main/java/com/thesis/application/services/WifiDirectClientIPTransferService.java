@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.thesis.application.activities.ThesisActivity;
+import com.thesis.application.handler.GlobalApplication;
 import com.thesis.application.serializable.WifiTransferSerializable;
 
 import java.io.File;
@@ -41,49 +43,57 @@ public class WifiDirectClientIPTransferService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Context context = getApplicationContext();
-        if(intent.getAction().equals(FileTransferService.ACTION_SEND_FILE)){
+        Log.d(ThesisActivity.TAG, "Inside Serivce 1");
+        Context context = GlobalApplication.getGlobalAppContext();
+        Log.d(ThesisActivity.TAG, "Inside Serivce 2");
+        if (intent.getAction().equals(FileTransferService.ACTION_SEND_FILE)) {
+            Log.d(ThesisActivity.TAG, "Inside Serivce 3");
             String host = intent.getExtras().getString(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS);
-            String inetAddress = intent.getExtras().getString(FileTransferService.InetAddress);
-            int port = intent.getExtras().getInt(FileTransferService.EXTRAS_GROUP_OWNER_PORT);
+            Log.d(ThesisActivity.TAG, "Inside Serivce 4");
+            String InetAddress =  intent.getExtras().getString(FileTransferService.InetAddress);
+            Log.d(ThesisActivity.TAG, "Inside Serivce 5");
+            Log.e("LocalIp Rece First COn:","host address"+ host);
 
             Socket socket = new Socket();
-
-
+            Log.d(ThesisActivity.TAG, "Inside Serivce 6");
+            int port = intent.getExtras().getInt(FileTransferService.EXTRAS_GROUP_OWNER_PORT);
+            Log.d(ThesisActivity.TAG, "Inside Serivce 7");
             try {
-                Log.d(ThesisActivity.TAG, "Opening client socket first time - ");
-
+                Log.d(ThesisActivity.TAG, "Inside Serivce 8");
+                Log.d(ThesisActivity.TAG, "Opening client socket for First tiime- ");
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(host, port)), FileTransferService.SOCKET_TIMEOUT);
-
                 Log.d(ThesisActivity.TAG, "Client socket - " + socket.isConnected());
-
-                OutputStream outputStream = socket.getOutputStream();
-                ContentResolver contentresolver = context.getContentResolver();
-                InputStream inputStream = null;
+                OutputStream stream = socket.getOutputStream();
 
 
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-                WifiTransferSerializable transferObject = new WifiTransferSerializable(inetAddress);
+               /*
+                * Object that is used to send file name with extension and recieved on other side.
+                */
+                ObjectOutputStream oos = new ObjectOutputStream(stream);
+                WifiTransferSerializable transObj = new WifiTransferSerializable(InetAddress);
 
-                objectOutputStream.writeObject(transferObject);
+                oos.writeObject(transObj);
+                System.out.println("Sending request to Socket Server");
 
-                objectOutputStream.close();
-
+                oos.close();	//close the ObjectOutputStream after sending data.
             } catch (IOException e) {
                 Log.e(ThesisActivity.TAG, e.getMessage());
-            }finally {
+                e.printStackTrace();
+            } finally {
                 if (socket != null) {
                     if (socket.isConnected()) {
                         try {
+                            Log.e("WiFiClientIP Service", "First Connection service socket closed");
                             socket.close();
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             // Give up
                             e.printStackTrace();
                         }
                     }
                 }
             }
+
         }
     }
 

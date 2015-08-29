@@ -68,14 +68,15 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
     protected String doInBackground(String... params) {
 
 
-        ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(port);
+            ServerSocket serverSocket = new ServerSocket(port);
             Log.d(ThesisActivity.TAG, "Server: Socket opened");
+
             Socket clientSocket = serverSocket.accept();
             Log.d(ThesisActivity.TAG, "Server: Connection Done");
 
             DeviceDetailFragment.ClientIP = clientSocket.getInetAddress().getHostAddress();
+
 
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
             WifiTransferSerializable transferObject  = null;
@@ -87,7 +88,9 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
                 Log.v(ThesisActivity.TAG, "File Transfer InetAddress: "+ inetAddrss);
 
                 if(inetAddrss != null && inetAddrss.equalsIgnoreCase(FileTransferService.InetAddress)){
-                    SharedPreferencesHandler.setStringValues(context, "WiFiClientIp", DeviceDetailFragment.ClientIP);
+                    SharedPreferencesHandler.setStringValues(context, "WifiClientIp", DeviceDetailFragment.ClientIP);
+                    Log.d(ThesisActivity.TAG, "FileServerAsyncTask Client Ip: "+  DeviceDetailFragment.ClientIP);
+                    Log.d(ThesisActivity.TAG, "SharedPer Client Ip: "+ SharedPreferencesHandler.getStringValue(context, "WifiClientIp"));
                     SharedPreferencesHandler.setStringValues(context, "ServerBoolean", "true");
                     objectInputStream.close();
                     serverSocket.close();
