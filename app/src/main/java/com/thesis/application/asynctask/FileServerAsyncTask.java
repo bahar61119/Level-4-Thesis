@@ -9,10 +9,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.thesis.application.ThesisActivity;
+import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,12 +23,12 @@ import java.net.Socket;
 /**
  * Created by bahar61119 on 8/28/2015.
  */
-public class FileServerAsyncTask extends AsyncTask<Void, Void, String> {
+public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
     private Context context;
     private TextView statusText;
 
-    public FileServerAsyncTask(Context context, View statusText){
+    public FileServerAsyncTask(Context context, View statusText, int port){
         this.context = context;
         this.statusText = (TextView)statusText;
     }
@@ -42,7 +40,7 @@ public class FileServerAsyncTask extends AsyncTask<Void, Void, String> {
     }
 
     @Override
-    protected String doInBackground(Void... params) {
+    protected String doInBackground(String... params) {
 
         ServerSocket serverSocket = null;
         try {

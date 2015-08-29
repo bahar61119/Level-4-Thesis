@@ -1,6 +1,5 @@
-package com.thesis.application;
+package com.thesis.application.activities;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,9 +13,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Switch;
 import android.widget.Toast;
 
+import com.thesis.application.R;
+import com.thesis.application.broadcastreceivers.WifiDirectBroadcastReceiver;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.fragments.DeviceListFragment;
 import com.thesis.application.interfaces.DeviceActionListener;

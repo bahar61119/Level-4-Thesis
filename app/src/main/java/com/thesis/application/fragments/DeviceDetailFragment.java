@@ -9,6 +9,8 @@ import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -18,15 +20,21 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.thesis.application.FileTransferService;
+import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
+import com.thesis.application.handler.MethodHandler;
+import com.thesis.application.handler.SharedPreferencesHandler;
+import com.thesis.application.services.FileTransferService;
 import com.thesis.application.R;
-import com.thesis.application.ThesisActivity;
+import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.asynctask.FileServerAsyncTask;
 import com.thesis.application.interfaces.DeviceActionListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Created by bahar61119 on 7/15/2015.
@@ -35,9 +43,19 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     ProgressDialog progressDialog = null;
+    private static ProgressDialog staticProgressDialog;
     private View contentView = null;
     private WifiP2pDevice device = null;
     private WifiP2pInfo info;
+    public static String ClientIP;
+    public static boolean ClientCheck;
+    public static String GroupOwnerAddress="";
+    public static long ActualFileLength = 0;
+    public static int Percentage = 0;
+    public static String Foldername = "ThesisWork";
+
+
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -89,15 +107,77 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         //super.onActivityResult(requestCode, resultCode, data);
 
         Uri uri = data.getData();
+        String selectedFilePath = uri.getPath();
+        String extension = "";
+
+        if(selectedFilePath != null){
+            try {
+                //URI path = new URI(selectedFilePath);
+                //File f = new File(path);
+                //Log.d(ThesisActivity.TAG,"File Path: "+ path);
+
+                selectedFilePath = MethodHandler.getPath(uri,getActivity());
+                File f = new File(selectedFilePath);
+                Log.d(ThesisActivity.TAG,"File Path: "+ selectedFilePath);
+
+                Long fileLength = f.length();
+                ActualFileLength = fileLength;
+                extension = f.getName();
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
         TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
         statusText.setText("Sending: "+ uri);
         Log.d(ThesisActivity.TAG, "Intent--------" +uri);
         Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
         serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
         serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, info.groupOwnerAddress.getHostAddress());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
-        getActivity().startService(serviceIntent);
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIP");
+        String ownerIP = SharedPreferencesHandler.getStringValue(getActivity(), "GroupOwnerAddress");
+
+        if(ownerIP != null && ownerIP.length()>0){
+
+            String host = null;
+            int subPort = -1;
+            String serverBool = SharedPreferencesHandler.getStringValue(getActivity(), "ServerBoolean");
+
+            if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
+                if(clientIP != null && !clientIP.equals("")){
+                    host = clientIP;
+                    subPort = FileTransferService.PORT;
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
+                }
+            }else{
+                host = ownerIP;
+                subPort = FileTransferService.PORT;
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
+            }
+
+            serviceIntent.putExtra(FileTransferService.Extension, extension);
+            serviceIntent.putExtra(FileTransferService.FileLength, ActualFileLength+"");
+            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+            if(host != null && subPort != -1){
+                getActivity().startService(serviceIntent);
+            }else{
+                dismissProgressDialog();
+                Toast.makeText(getActivity(),"Host address not found. Please Re-connect.", Toast.LENGTH_LONG).show();
+            }
+
+
+        }else{
+            dismissProgressDialog();
+            Toast.makeText(getActivity(),"Host address not found. Please Re-connect.", Toast.LENGTH_LONG).show();
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     @Override
@@ -115,12 +195,47 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         textView = (TextView) contentView.findViewById(R.id.tvGroupIp);
         textView.setText("Group Owner IP: "+ info.groupOwnerAddress.getHostAddress());
 
+        String groupOwner = info.groupOwnerAddress.getHostAddress();
+
+        if(groupOwner != null && !groupOwner.equals("")) SharedPreferencesHandler.setStringValues(getActivity(), "GroupOwnerAddress", groupOwner);
+        contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
+
         if(info.groupFormed && info.isGroupOwner){
-            new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText)).execute();
+
+            SharedPreferencesHandler.setStringValues(getActivity(),"ServerBoolean", "true");
+
+            FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+            if(fileServerAsyncTask!= null){
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                    fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
+                }else{
+                    fileServerAsyncTask.execute();
+                }
+            }
 
         }else if(info.groupFormed){
-            contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
             ((TextView)contentView.findViewById(R.id.tvStatusText)).setText(getResources().getString(R.string.client_text));
+
+            if(!ClientCheck){
+                FirstConnectionMessageAsyncTask firstConnectionMessageAsyncTask = new FirstConnectionMessageAsyncTask();
+                if(firstConnectionMessageAsyncTask != null){
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                        firstConnectionMessageAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{null});
+                    }else{
+                        firstConnectionMessageAsyncTask.execute();
+                    }
+                }
+            }
+
+            FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+            if(fileServerAsyncTask!= null){
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                    fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
+                }else{
+                    fileServerAsyncTask.execute();
+                }
+            }
+
         }
 
         contentView.findViewById(R.id.btnConnect).setVisibility(View.GONE);
@@ -149,6 +264,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         view.setText("");
         contentView.findViewById(R.id.btnGallery).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
+
+        SharedPreferencesHandler.setStringValues(getActivity(),"GroupOwnerAddress", "");
+        SharedPreferencesHandler.setStringValues(getActivity(),"WiFiClientIp","");
+        SharedPreferencesHandler.setStringValues(getActivity(),"ServerBoolean","");
     }
 
     public static boolean copyFile(InputStream inputStream, OutputStream out) {
@@ -170,6 +289,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             return false;
         }
         return true;
+    }
+
+    public static void dismissProgressDialog(){
+
     }
 
 

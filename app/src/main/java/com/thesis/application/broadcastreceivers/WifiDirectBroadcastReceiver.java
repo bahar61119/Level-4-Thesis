@@ -1,13 +1,14 @@
-package com.thesis.application;
+package com.thesis.application.broadcastreceivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
-import android.net.NetworkRequest;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 
+import com.thesis.application.R;
+import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.fragments.DeviceListFragment;
 
