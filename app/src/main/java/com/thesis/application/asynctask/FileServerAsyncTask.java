@@ -16,7 +16,7 @@ import com.thesis.application.R;
 import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.handler.SharedPreferencesHandler;
-import com.thesis.application.serializable.WifiTransferSerializable;
+import com.thesis.application.serializable.WiFiTransferModal;
 import com.thesis.application.services.FileTransferService;
 
 import java.io.File;
@@ -79,11 +79,13 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
 
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
-            WifiTransferSerializable transferObject  = null;
+            WiFiTransferModal transferObject  = null;
             String inetAddrss;
 
             try {
-                transferObject = (WifiTransferSerializable) objectInputStream.readObject();
+                transferObject = (WiFiTransferModal) objectInputStream.readObject();
+
+                Log.d(ThesisActivity.TAG, "Received File Len: "+ transferObject.getFileName());
                 inetAddrss = transferObject.getInetAddress();
                 Log.v(ThesisActivity.TAG, "File Transfer InetAddress: "+ inetAddrss);
 
@@ -118,8 +120,8 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
 
             ////////////////////////////////////////////////////////////////////////////////////////
-            final File f = new File(Environment.getExternalStorageDirectory() + "/"
-                    + context.getPackageName() + "-thesisWork/" + transferObject.getFileName());
+            final File f = new File(Environment.getExternalStorageDirectory() + "/thesis/"
+                    + context.getPackageName() + "-thesisWork:"+System.currentTimeMillis()+"-" + transferObject.getFileName());
 
             File dirs = new File(f.getParent());
             if(!dirs.exists()) dirs.mkdirs();

@@ -106,81 +106,97 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         //super.onActivityResult(requestCode, resultCode, data);
-
-        Uri uri = data.getData();
-        String selectedFilePath = uri.getPath();
-        String extension = "";
-
-        if(selectedFilePath != null){
+        if(resultCode == getActivity().RESULT_OK){
+            Uri uri = data.getData();
+            String selectedFilePath = uri.getPath();
+            String extension = "";
             try {
-                //URI path = new URI(selectedFilePath);
-                //File f = new File(path);
-                //Log.d(ThesisActivity.TAG,"File Path: "+ path);
-
-                selectedFilePath = MethodHandler.getPath(uri,getActivity());
-                File f = new File(selectedFilePath);
-                Log.d(ThesisActivity.TAG,"File Path: "+ selectedFilePath);
-
-                Long fileLength = f.length();
-                ActualFileLength = fileLength;
-                extension = f.getName();
-
-
+                //selectedFilePath = MethodHandler.getPath(uri,getActivity());
+                selectedFilePath = MethodHandler.getRealPathFromURI(getActivity().getContentResolver(), uri);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+            if(selectedFilePath != null){
 
+                    //URI path = new URI(selectedFilePath);
+                    //File f = new File(path);
+                    //Log.d(ThesisActivity.TAG,"File Path: "+ path);
 
-        TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
-        statusText.setText("Sending: "+ uri);
-        Log.d(ThesisActivity.TAG, "Intent--------" +uri);
-        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                    File f = new File(selectedFilePath);
+                    Log.d(ThesisActivity.TAG,"File Path: "+ selectedFilePath);
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
+                    Long fileLength = f.length();
+                    ActualFileLength = fileLength;
+                    try {
+                        extension = f.getName();
+                        Log.e("Name of File-> ", "" + extension);
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                        e.printStackTrace();
+                    }
 
-        String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIp");
-        //String clientIP = ClientIP;
-        Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
-
-        String ownerIP = SharedPreferencesHandler.getStringValue(getActivity(), "GroupOwnerAddress");
-
-        if(ownerIP != null && ownerIP.length()>0){
-
-            String host = null;
-            int subPort = -1;
-            String serverBool = SharedPreferencesHandler.getStringValue(getActivity(), "ServerBoolean");
-
-            if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
-                if(clientIP != null && !clientIP.equals("")){
-                    host = clientIP;
-                    subPort = FileTransferService.PORT;
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
-                    Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
-                }
-            }else{
-                host = ownerIP;
-                subPort = FileTransferService.PORT;
-                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
+            }
+            else{
+                Log.e("", "path is null");
+                return;
             }
 
-            serviceIntent.putExtra(FileTransferService.Extension, extension);
-            serviceIntent.putExtra(FileTransferService.FileLength, ActualFileLength+"");
-            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
-            if(host != null && subPort != -1){
-                showProgress("Sending...");
-                getActivity().startService(serviceIntent);
+
+
+
+            TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
+            statusText.setText("Sending: "+ uri);
+            Log.d(ThesisActivity.TAG, "Intent--------" +uri);
+            Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+            serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+
+            //////////////////////////////////////////////////////////////////////////////////////////////
+
+            String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIp");
+            //String clientIP = ClientIP;
+            Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
+
+            String ownerIP = SharedPreferencesHandler.getStringValue(getActivity(), "GroupOwnerAddress");
+
+            if(ownerIP != null && ownerIP.length()>0){
+
+                String host = null;
+                int subPort = -1;
+                String serverBool = SharedPreferencesHandler.getStringValue(getActivity(), "ServerBoolean");
+
+                if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
+                    if(clientIP != null && !clientIP.equals("")){
+                        host = clientIP;
+                        subPort = FileTransferService.PORT;
+                        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
+                        Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
+                    }
+                }else{
+                    host = ownerIP;
+                    subPort = FileTransferService.PORT;
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
+                }
+
+                serviceIntent.putExtra(FileTransferService.Extension, extension);
+                serviceIntent.putExtra(FileTransferService.FileLength, ActualFileLength+"");
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+                if(host != null && subPort != -1){
+                    showProgress("Sending...");
+                    getActivity().startService(serviceIntent);
+                }else{
+                    dismissProgressDialog();
+                    Toast.makeText(getActivity(),"Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
+                }
+
+
             }else{
                 dismissProgressDialog();
-                Toast.makeText(getActivity(),"Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(),"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
             }
-
-
-        }else{
-            dismissProgressDialog();
-            Toast.makeText(getActivity(),"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
+        }
+        else{
+            Toast.makeText(getActivity(), "Cancelled Request",Toast.LENGTH_LONG);
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,21 +322,21 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         try {
             while ((len = inputStream.read(buf)) != -1) {
                 out.write(buf, 0, len);
-            }
+                try {
+                    total += len;
 
-            try {
-                total += len;
+                    if(length>0){
+                        Percentage = (int) ((total*100)/ length);
+                    }
 
-                if(length>0){
-                    Percentage = (int) ((total*100)/ length);
+                    staticProgressDialog.setProgress(Percentage);
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Percentage = 0;
+                    ActualFileLength = 0;
                 }
 
-                staticProgressDialog.setProgress(Percentage);
-
-            }catch (Exception e){
-                e.printStackTrace();
-                Percentage = 0;
-                ActualFileLength = 0;
             }
 
             dismissProgressDialog();

@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.handler.GlobalApplication;
-import com.thesis.application.serializable.WifiTransferSerializable;
+import com.thesis.application.serializable.WiFiTransferModal;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +71,7 @@ public class WifiDirectClientIPTransferService extends IntentService {
                 * Object that is used to send file name with extension and recieved on other side.
                 */
                 ObjectOutputStream oos = new ObjectOutputStream(stream);
-                WifiTransferSerializable transObj = new WifiTransferSerializable(InetAddress);
+                WiFiTransferModal transObj = new WiFiTransferModal(InetAddress);
 
                 oos.writeObject(transObj);
                 System.out.println("Sending request to Socket Server");

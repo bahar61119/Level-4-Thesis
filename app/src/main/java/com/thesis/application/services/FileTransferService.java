@@ -11,7 +11,7 @@ import android.widget.Toast;
 
 import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
-import com.thesis.application.serializable.WifiTransferSerializable;
+import com.thesis.application.serializable.WiFiTransferModal;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -81,11 +81,12 @@ public class FileTransferService extends IntentService {
                 ContentResolver cr = context.getContentResolver();
                 InputStream is = null;
                 Long fileLength = Long.parseLong(fileLengthExtra);
-                WifiTransferSerializable transferObject = null;
+                WiFiTransferModal transferObject = null;
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(stream);
 
-                if(transferObject == null) transferObject = new WifiTransferSerializable();
-                transferObject = new WifiTransferSerializable(extension,fileLength);
+                if(transferObject == null) transferObject = new WiFiTransferModal();
+                transferObject = new WiFiTransferModal(extension,fileLength);
+                objectOutputStream.reset();
                 objectOutputStream.writeObject(transferObject);
 
                 try {
@@ -95,6 +96,7 @@ public class FileTransferService extends IntentService {
                 }
 
                 DeviceDetailFragment.copyFile(is, stream,fileLength);
+                Log.d(ThesisActivity.TAG, "SerializationFile Name: " + fileLength);
                 Log.d(ThesisActivity.TAG, "Client: Data written");
 
                 objectOutputStream.close();
