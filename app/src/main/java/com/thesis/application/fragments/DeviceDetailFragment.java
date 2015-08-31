@@ -12,6 +12,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
+import com.thesis.application.handler.FileInformation;
 import com.thesis.application.handler.MethodHandler;
 import com.thesis.application.handler.SharedPreferencesHandler;
 import com.thesis.application.services.FileTransferService;
@@ -36,6 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 /**
  * Created by bahar61119 on 7/15/2015.
@@ -386,6 +389,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             e.printStackTrace();
         }
     }
+
+
 
 
 }
