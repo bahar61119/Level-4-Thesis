@@ -4,9 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
+import com.thesis.application.handler.GlobalApplication;
 import com.thesis.application.handler.SharedPreferencesHandler;
 import com.thesis.application.services.FileTransferService;
 import com.thesis.application.services.WifiDirectClientIPTransferService;
@@ -19,9 +21,11 @@ import java.io.File;
 public class FirstConnectionMessageAsyncTask extends AsyncTask<String, Void, String> {
 
     Context context;
+    String request;
 
-    public FirstConnectionMessageAsyncTask(Context context){
+    public FirstConnectionMessageAsyncTask(Context context, String request){
         this.context = context;
+        this.request = request;
     }
 
     @Override
@@ -34,34 +38,80 @@ public class FirstConnectionMessageAsyncTask extends AsyncTask<String, Void, Str
         // TODO Auto-generated method stub
         Log.e("On first Connect", "On first Connect");
 
-        String groupOwnerIP = SharedPreferencesHandler.getStringValue(context,"GroupOwnerAddress");
-        Log.e(ThesisActivity.TAG, "On FC: GroupOWnerIP: "+groupOwnerIP);
+        if(request.equalsIgnoreCase(FileTransferService.InetAddress)){
+            String groupOwnerIP = SharedPreferencesHandler.getStringValue(context,"GroupOwnerAddress");
+            Log.e(ThesisActivity.TAG, "On FC: GroupOWnerIP: "+groupOwnerIP);
 
-        Intent serviceIntent = new Intent(context,
-                WifiDirectClientIPTransferService.class);
-        Log.d(ThesisActivity.TAG, "service configure 1");
-        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+            Intent serviceIntent = new Intent(context,
+                    WifiDirectClientIPTransferService.class);
+            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
 
-        Log.d(ThesisActivity.TAG, "service configure 2");
 
-        if (groupOwnerIP != null) {
+            if (groupOwnerIP != null) {
 
-            Log.d(ThesisActivity.TAG, "service configure 3");
-            serviceIntent.putExtra(
-                    FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                    groupOwnerIP);
-            Log.d(ThesisActivity.TAG, "service configure 4");
-            serviceIntent.putExtra(
-                    FileTransferService.EXTRAS_GROUP_OWNER_PORT,
-                    FileTransferService.PORT);
-            Log.d(ThesisActivity.TAG, "service configure 5");
-            serviceIntent.putExtra(FileTransferService.InetAddress,
-                    FileTransferService.InetAddress);
-            Log.d(ThesisActivity.TAG, "service configure 6");
+                serviceIntent.putExtra(
+                        FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                        groupOwnerIP);
+                serviceIntent.putExtra(
+                        FileTransferService.EXTRAS_GROUP_OWNER_PORT,
+                        FileTransferService.PORT);
+                serviceIntent.putExtra(FileTransferService.InetAddress,
+                        FileTransferService.InetAddress);
 
+            }
+            Log.d(ThesisActivity.TAG, "First connect Service Started");
+            context.startService(serviceIntent);
+
+        }else{
+            String groupOwnerIP = SharedPreferencesHandler.getStringValue(context,"GroupOwnerAddress");
+            Log.e(ThesisActivity.TAG, "On FC: GroupOWnerIP: "+groupOwnerIP);
+
+            Intent serviceIntent = new Intent(context,
+                    WifiDirectClientIPTransferService.class);
+            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+
+            /////////////////////////////////////////////////////////////////////////
+
+            String clientIP = SharedPreferencesHandler.getStringValue(context,"WifiClientIp");
+            //String clientIP = ClientIP;
+            Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
+
+            String ownerIP = SharedPreferencesHandler.getStringValue(context, "GroupOwnerAddress");
+
+            if(ownerIP != null && ownerIP.length()>0){
+
+                String host = null;
+                int subPort = -1;
+                String serverBool = SharedPreferencesHandler.getStringValue(context, "ServerBoolean");
+
+                if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
+                    if(clientIP != null && !clientIP.equals("")){
+                        host = clientIP;
+                        subPort = FileTransferService.PORT;
+                        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
+                        Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
+                    }
+                }else{
+                    host = ownerIP;
+                    subPort = FileTransferService.PORT;
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
+                }
+
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+                serviceIntent.putExtra(FileTransferService.InetAddress,request);
+                if(host != null && subPort != -1){
+                    Log.d(ThesisActivity.TAG, "First connect Service Started");
+                    context.startService(serviceIntent);
+                }else{
+                    DeviceDetailFragment.dismissProgressDialog();
+                    Toast.makeText(context, "Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
+                }
+
+
+            }
         }
-        Log.d(ThesisActivity.TAG, "First connect Service Started");
-        context.startService(serviceIntent);
+
+        /////////////////////////////////////////////////////////////////////////
 
         return "success";
     }

@@ -83,7 +83,16 @@ public class FileInformation {
     }
 
     public void setChunkList(ArrayList<Integer> chunkList){
+        this.chunkList.clear();
         this.chunkList = chunkList;
+    }
+
+    public void addChunkNumber(int number){
+        this.chunkList.add(number);
+    }
+
+    public void removeChunkNumber(int index){
+        this.chunkList.remove(index);
     }
 
     public void addChunkToList(int chunkNumber){
@@ -124,6 +133,10 @@ public class FileInformation {
 
     public int getChunkListSize(){
         return chunkList.size();
+    }
+
+    public boolean isChunkCompleted(){
+        return getChunkListSize() == getNumberOfChunk();
     }
 
 }

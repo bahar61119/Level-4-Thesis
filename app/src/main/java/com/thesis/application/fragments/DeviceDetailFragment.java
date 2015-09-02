@@ -2,6 +2,7 @@ package com.thesis.application.fragments;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
@@ -22,8 +23,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.thesis.application.asynctask.FileSendAsyncTask;
 import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
 import com.thesis.application.handler.FileInformation;
+import com.thesis.application.handler.GlobalApplication;
 import com.thesis.application.handler.MethodHandler;
 import com.thesis.application.handler.SharedPreferencesHandler;
 import com.thesis.application.services.FileTransferService;
@@ -48,7 +51,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     ProgressDialog progressDialog = null;
     public static ProgressDialog staticProgressDialog;
-    private View contentView = null;
+    private static View contentView = null;
     private WifiP2pDevice device = null;
     private WifiP2pInfo info;
     public static String ClientIP;
@@ -97,13 +100,136 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             public void onClick(View v) {
                 //Toast.makeText(getActivity(),"Not Implemented",Toast.LENGTH_LONG).show();
 
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE );
+                ///Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                ///intent.setType("image/*");
+                ///startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE );
+
+                FirstConnectionMessageAsyncTask firstObj = new FirstConnectionMessageAsyncTask(getActivity(), FileTransferService.RequestInformationFile);
+                if (firstObj != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        firstObj.executeOnExecutor(
+                                AsyncTask.THREAD_POOL_EXECUTOR,
+                                new String[] { null });
+                    } else
+                        firstObj.execute();
+                }
+
             }
         });
 
         return contentView;
+    }
+
+    public static void sendchunkFilesSequencially(Context context){
+
+        String jsonString = SharedPreferencesHandler.getStringValue(context, MethodHandler.CHUNKFILETOSEND);
+
+        if(jsonString == null){
+            Toast.makeText(GlobalApplication.getGlobalAppContext(),"No New Files To Send",Toast.LENGTH_LONG).show();
+        }
+        else{
+            ArrayList<FileInformation> fileInformation = new ArrayList<>();
+
+            fileInformation = (ArrayList<FileInformation>)MethodHandler.convertJsonStringToInfoObjectArray(jsonString);
+
+
+            ArrayList<FileInformation> infoList = new ArrayList<>();
+            int k=0;
+            for(int i=0;i<fileInformation.size();i++){
+                for(int j=0; j< fileInformation.get(i).getChunkListSize();j++){
+                    FileInformation info = new FileInformation();
+                    info = fileInformation.get(i);
+                    ArrayList<Integer> chunkList = new ArrayList<>();
+                    chunkList.add(info.getChunkList().get(j));
+                    info.setChunkList(chunkList);
+                    infoList.add(info);
+                }
+            }
+
+
+            if(infoList!= null && infoList.size()>0){
+                Log.d("File Chunk 0 : ", infoList.get(0).toString());
+                FileInformation info = infoList.get(0);
+
+                String filePath = MethodHandler.ChunkFilesDirectory;
+                int j = info.getFileName().lastIndexOf(".");
+                String name = info.getFileName().substring(0,j);
+                filePath+="/"+name+"/";
+                String fileName = info.getFileName()+".part"+info.getChunkList().get(0);
+                filePath+= fileName;
+
+                File f = new File(filePath);
+                Long fileLength = Long.valueOf(f.length());
+                boolean isDataTransfer = true;
+                Log.d("Sending: ", filePath);
+                jsonString = MethodHandler.convertObjectToJsonString(info);
+                DeviceDetailFragment.sendData(context, filePath, fileName, fileLength, isDataTransfer, jsonString);
+                Log.d("Send Data:", "Done");
+            }
+            else{
+                Toast.makeText(context,"No New Files To Send",Toast.LENGTH_LONG).show();
+            }
+
+
+        }
+    }
+
+    public static void sendData(Context context, String filePath, String fileName, Long fileLength, boolean isDataTransfer, String jsonString){
+
+        Log.d(ThesisActivity.TAG, "Intent--------" +filePath);
+
+        Intent serviceIntent = new Intent(context, FileTransferService.class);
+        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, filePath);
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        String clientIP = SharedPreferencesHandler.getStringValue(context,"WifiClientIp");
+        //String clientIP = ClientIP;
+        Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
+
+        String ownerIP = SharedPreferencesHandler.getStringValue(context, "GroupOwnerAddress");
+
+        if(ownerIP != null && ownerIP.length()>0){
+
+            String host = null;
+            int subPort = -1;
+            String serverBool = SharedPreferencesHandler.getStringValue(context, "ServerBoolean");
+
+            if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
+                if(clientIP != null && !clientIP.equals("")){
+                    host = clientIP;
+                    subPort = FileTransferService.PORT;
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
+                    Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
+                }
+            }else{
+                Log.d("CLient","Sender");
+                host = ownerIP;
+                subPort = FileTransferService.PORT;
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
+            }
+
+            serviceIntent.putExtra(FileTransferService.Extension, fileName);
+            serviceIntent.putExtra(FileTransferService.IsDataTranser, isDataTransfer);
+            serviceIntent.putExtra(FileTransferService.DATAINFORMATION, jsonString);
+            serviceIntent.putExtra(FileTransferService.FileLength, fileLength+"");
+            serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
+            if(host != null && subPort != -1){
+                String send = "Sending: Information File";
+                if(!isDataTransfer) DeviceDetailFragment.showProgress(send);
+                Log.d("Sending :","From Send Function");
+                context.startService(serviceIntent);
+            }else{
+                dismissProgressDialog();
+                Toast.makeText(context,"Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
+            }
+
+
+        }else{
+            dismissProgressDialog();
+            Toast.makeText(context,"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -150,6 +276,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
             statusText.setText("Sending: "+ uri);
             Log.d(ThesisActivity.TAG, "Intent--------" +uri);
+
             Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
             serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
             serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
@@ -205,6 +332,18 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         //////////////////////////////////////////////////////////////////////////////////////////////
     }
 
+    public static void runServer(Context context){
+        FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(context,FileTransferService.PORT);
+        if(fileServerAsyncTask!= null){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
+            }else{
+                fileServerAsyncTask.execute();
+            }
+        }
+    }
+
+
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo info) {
         if(progressDialog!=null && progressDialog.isShowing()){
@@ -226,35 +365,26 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                     "GroupOwnerAddress", GroupOwner);
             contentView.findViewById(R.id.btnGallery).setVisibility(View.VISIBLE);
             if (info.groupFormed && info.isGroupOwner) {
-        	/*
-        	 * set shaerdprefrence which remember that device is server.
-        	 */
+
                 SharedPreferencesHandler.setStringValues(getActivity(),
                         "ServerBoolean", "true");
 
-            /*new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
-                    .execute();*/
                 FileServerAsyncTask FileServerobj = new FileServerAsyncTask(
-                        getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+                        getActivity(), FileTransferService.PORT);
                 if (FileServerobj != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                         FileServerobj.executeOnExecutor(
                                 AsyncTask.THREAD_POOL_EXECUTOR,
                                 new String[] { null });
-                        // FileServerobj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,Void);
                     }
                     else
                         FileServerobj.execute();
                 }
+
             }
             else  {
-                // The other device acts as the client. In this case, we enable the
-                // get file button.
-//            mContentView.findViewById(R.id.btn_start_client).setVisibility(View.VISIBLE);
-//            ((TextView) mContentView.findViewById(R.id.status_text)).setText(getResources()
-//                    .getString(R.string.client_text));
-                //if (!ClientCheck) {
-                    FirstConnectionMessageAsyncTask firstObj = new FirstConnectionMessageAsyncTask(getActivity());
+
+                    FirstConnectionMessageAsyncTask firstObj = new FirstConnectionMessageAsyncTask(getActivity(), FileTransferService.InetAddress);
                     if (firstObj != null) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                             firstObj.executeOnExecutor(
@@ -263,10 +393,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                         } else
                             firstObj.execute();
                     }
-                //}
 
                 FileServerAsyncTask FileServerobj = new FileServerAsyncTask(
-                        getActivity(), contentView.findViewById(R.id.tvStatusText), FileTransferService.PORT);
+                        getActivity(), FileTransferService.PORT);
                 if (FileServerobj != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                         FileServerobj.executeOnExecutor(
@@ -278,7 +407,17 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
                 }
 
+
             }
+
+            //ArrayList<FileInformation> fileInformation = MethodHandler.readInformationFile();
+            //String filePath = MethodHandler.InformationFilePath;
+            //int i = filePath.lastIndexOf("/");
+            //String fileName = filePath.substring(0, i);
+            //String jsonString = MethodHandler.convertObjectToJsonString(fileInformation);
+            //Long fileLength = Long.valueOf(jsonString.length());
+            //sendData(getActivity().getApplicationContext(),filePath,fileName,fileLength,false,jsonString);
+
         }
         catch(Exception e){
 
@@ -356,9 +495,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         return true;
     }
 
-    public void showProgress(final String task) {
+    public static void showProgress(final String task) {
         if (staticProgressDialog == null) {
-            staticProgressDialog = new ProgressDialog(getActivity(),
+            staticProgressDialog = new ProgressDialog(GlobalApplication.getGlobalAppContext(),
                     ProgressDialog.THEME_HOLO_LIGHT);
         }
         Handler handle = new Handler();
@@ -389,6 +528,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             e.printStackTrace();
         }
     }
+
 
 
 

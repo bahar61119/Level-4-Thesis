@@ -43,23 +43,16 @@ public class WifiDirectClientIPTransferService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d(ThesisActivity.TAG, "Inside Serivce 1");
+
         Context context = GlobalApplication.getGlobalAppContext();
-        Log.d(ThesisActivity.TAG, "Inside Serivce 2");
         if (intent.getAction().equals(FileTransferService.ACTION_SEND_FILE)) {
-            Log.d(ThesisActivity.TAG, "Inside Serivce 3");
             String host = intent.getExtras().getString(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS);
-            Log.d(ThesisActivity.TAG, "Inside Serivce 4");
             String InetAddress =  intent.getExtras().getString(FileTransferService.InetAddress);
-            Log.d(ThesisActivity.TAG, "Inside Serivce 5");
             Log.e("LocalIp Rece First COn:","host address"+ host);
 
             Socket socket = new Socket();
-            Log.d(ThesisActivity.TAG, "Inside Serivce 6");
             int port = intent.getExtras().getInt(FileTransferService.EXTRAS_GROUP_OWNER_PORT);
-            Log.d(ThesisActivity.TAG, "Inside Serivce 7");
             try {
-                Log.d(ThesisActivity.TAG, "Inside Serivce 8");
                 Log.d(ThesisActivity.TAG, "Opening client socket for First tiime- ");
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(host, port)), FileTransferService.SOCKET_TIMEOUT);

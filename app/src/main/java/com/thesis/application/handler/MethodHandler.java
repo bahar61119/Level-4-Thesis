@@ -7,8 +7,10 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.thesis.application.activities.ThesisActivity;
 
 import java.io.File;
@@ -16,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +26,14 @@ import java.util.List;
  * Created by bahar61119 on 8/29/2015.
  */
 public class MethodHandler {
+
+    public static final String InformationFilePath = Environment.getExternalStorageDirectory() + "/thesis/information.txt";
+    public static final String FilesDirectory =  Environment.getExternalStorageDirectory() + "/thesis/files";
+    public static final String ChunkFilesDirectory = Environment.getExternalStorageDirectory() + "/thesis/chunkfiles";
+    public static final String FILEINFORMSTION = "fileinformation";
+    public static final String CHUNKFILEINFORMATION = "chunkfileinformation";
+    public static final String CHUNKFILETOSEND = "chunkfiletosend";
+    public static final String IsFileSend = "isfilesend";
 
     public static String getPath(Uri uri, Context context) {
         if (uri == null) {
@@ -60,9 +71,20 @@ public class MethodHandler {
         return  gson.toJson(object);
     }
 
-    public static Object convertJsonStringToObject(String jsonString, Object object){
+    public static Object convertJsonStringToInfoObject(String jsonString){
+
         Gson gson = new Gson();
-        return gson.fromJson(jsonString, object.getClass());
+        Type collectionType = new TypeToken<FileInformation>() {
+        }.getType();
+
+        return gson.fromJson(jsonString, collectionType);
+    }
+    public static Object convertJsonStringToInfoObjectArray(String jsonString){
+
+        Gson gson = new Gson();
+        Type collectionType = new TypeToken<ArrayList<FileInformation>>() {
+        }.getType();
+        return gson.fromJson(jsonString, collectionType);
     }
 
     public static void writeJsonStringToFIle(String jsonString, String filePath) throws IOException {
@@ -212,7 +234,7 @@ public class MethodHandler {
 
     public static void mergeFile(String fileName){
 
-        String filePath = Environment.getExternalStorageDirectory() + "/thesis/mergefiles/"+fileName;
+        String filePath = Environment.getExternalStorageDirectory() + "/thesis/files/"+fileName;
 
         File ofile = new File(filePath);
         FileOutputStream fos;
@@ -258,12 +280,12 @@ public class MethodHandler {
         ArrayList<FileInformation> fileInformation = new ArrayList<>();
         try {
             String jsonString = MethodHandler.readJsonStringToFIle(filePath);
-            fileInformation = (ArrayList<FileInformation>)MethodHandler.convertJsonStringToObject(jsonString, fileInformation);
-            Log.d("File Directory Read:",fileInformation.toString());
+            fileInformation = (ArrayList<FileInformation>)MethodHandler.convertJsonStringToInfoObjectArray(jsonString);
+            //Log.d("File Directory Read:",fileInformation.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d("File Directory",MethodHandler.convertObjectToJsonString(fileInformation));
+        //Log.d("File Directory",fileInformation.toString());
         return fileInformation;
     }
 
@@ -276,23 +298,25 @@ public class MethodHandler {
         if(file != null )Log.d("Number of Files:",""+file.length);
         else Log.d("Number of Files:","Null");
 
-        FileInformation info = new FileInformation();
+
         ArrayList<FileInformation> fileInformations = new ArrayList<>();
         for (int i=0; i < file.length; i++)
         {
+            FileInformation info = new FileInformation();
             Log.d("Files", "FileName:" + file[i].getName());
             info.setFileName(file[i].getName());
             info.setFileSize(file[i].length());
 
             info.setCompleted(true);
-            ArrayList<Integer> arrayList = new ArrayList<>();
-            for(int j=1;j<=10;j++){
-                arrayList.add(j);
-            }
-            info.setChunkList(arrayList);
+
 
             int chunk = MethodHandler.splitFile(info.getFileName());
             info.setNumberOfChunk(chunk);
+            ArrayList<Integer> arrayList = new ArrayList<>();
+            for(int j=0;j<chunk;j++){
+                arrayList.add(j);
+            }
+            info.setChunkList(arrayList);
 
             fileInformations.add(info);
         }
@@ -352,18 +376,28 @@ public class MethodHandler {
 
     public static ArrayList<FileInformation> updateInformationFile(ArrayList<FileInformation> updateTo, ArrayList<FileInformation> updateFrom){
 
+        Log.d("Info File: ",updateTo.toString());
+        Log.d("File List: ",updateFrom.toString());
+        ArrayList<FileInformation> newInformation = new ArrayList<>();
         for(int i=0;i<updateFrom.size();i++){
             boolean flag = false;
-            for(int j=0;j<updateTo.size();i++){
+            for(int j=0;j<updateTo.size();j++){
                 if(updateTo.get(j).getFileName().equalsIgnoreCase(updateFrom.get(i).getFileName())){
-                    updateTo.add(j,updateFrom.get(i));
-                    flag = true;
+                    updateTo.remove(j);
                     break;
                 }
             }
-            if(!flag) updateTo.add(updateFrom.get(i));
         }
-        return updateTo;
+
+        for(int i=0;i<updateFrom.size();i++){
+            newInformation.add(updateFrom.get(i));
+        }
+        for(int i=0;i<updateTo.size();i++){
+            newInformation.add(updateTo.get(i));
+        }
+
+        Log.d("New Info File: ",updateFrom.toString());
+        return newInformation;
     }
 
     public static ArrayList<FileInformation> getChangeInformation(ArrayList<FileInformation> originalInformation, ArrayList<FileInformation> receivedInformation){
@@ -371,17 +405,23 @@ public class MethodHandler {
 
         for(int i=0;i<originalInformation.size();i++){
             boolean flag = false;
-            for(int j=0;j<receivedInformation.size();i++){
+            for(int j=0;j<receivedInformation.size();j++){
                 if(originalInformation.get(i).getFileName().equalsIgnoreCase(receivedInformation.get(j).getFileName())){
+                   if(receivedInformation.get(j).getChunkList().size()==receivedInformation.get(j).getNumberOfChunk()){
+                       flag = true;
+                       break;
+                   }
                     FileInformation info = originalInformation.get(i);
                     ArrayList<Integer> chunkList = new ArrayList<>();
 
-                    for(int k=0;i<originalInformation.get(i).getChunkList().size();k++){
+                    for(int k=0;k<originalInformation.get(i).getChunkList().size();k++){
                         if(!receivedInformation.get(j).getChunkList().contains(originalInformation.get(i).getChunkList().get(k))){
                             chunkList.add(originalInformation.get(i).getChunkList().get(k));
                         }
                     }
-                    info.setChunkList(chunkList);
+
+
+                    if(chunkList!=null && chunkList.size()>0) info.setChunkList(chunkList);
                     flag = true;
 
                     fileInformations.add(info);
@@ -397,13 +437,21 @@ public class MethodHandler {
     }
 
     public static ArrayList<FileInformation> updateReceivedChunk(ArrayList<FileInformation> originalInformation, FileInformation receivedChunk){
+        Log.d("Received Chunk: ", receivedChunk.getFileName());
+        Log.d("Received Chunk Number: ",""+receivedChunk.getChunkList().get(0));
         boolean flag = false;
         for(int i=0;i<originalInformation.size();i++){
             if(originalInformation.get(i).getFileName().equalsIgnoreCase(receivedChunk.getFileName())){
-                ArrayList<Integer> chunkList = originalInformation.get(i).getChunkList();
-                chunkList.add(receivedChunk.getChunkList().get(0));
-                originalInformation.get(i).setChunkList(chunkList);
+                if(originalInformation.get(i).checkChunkInList(receivedChunk.getChunkList().get(0))) continue;
+                originalInformation.get(i).addChunkNumber(receivedChunk.getChunkList().get(0));
                 flag = true;
+                Log.d("New Chunk List : ", originalInformation.get(i).getChunkList().toString());
+
+                if(originalInformation.get(i).isChunkCompleted()){
+                    originalInformation.get(i).setCompleted(true);
+                    MethodHandler.writeFileFromChunkFiles(originalInformation.get(i).getFileName());
+                }
+
                 break;
             }
         }

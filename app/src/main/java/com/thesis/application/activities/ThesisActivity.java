@@ -19,7 +19,11 @@ import com.thesis.application.R;
 import com.thesis.application.broadcastreceivers.WifiDirectBroadcastReceiver;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.fragments.DeviceListFragment;
+import com.thesis.application.handler.FileInformation;
+import com.thesis.application.handler.MethodHandler;
 import com.thesis.application.interfaces.DeviceActionListener;
+
+import java.util.ArrayList;
 
 /**
  * Created by bahar61119 on 7/14/2015.
@@ -38,6 +42,22 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_thesis);
+
+
+        ArrayList<FileInformation> informationFile = new ArrayList<>();
+        ArrayList<FileInformation> informationFileList = new ArrayList<>();
+
+        informationFile = MethodHandler.readInformationFile();
+        informationFileList = MethodHandler.readFileList();
+
+
+        if(informationFileList != null){
+            if(informationFile == null ) MethodHandler.writeInformationFile(informationFileList);
+            else{
+                informationFile = MethodHandler.updateInformationFile(informationFile,informationFileList);
+                MethodHandler.writeInformationFile(informationFile);
+            }
+        }
 
 
         intentFilter = new IntentFilter();

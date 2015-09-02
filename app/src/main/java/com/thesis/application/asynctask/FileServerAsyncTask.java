@@ -11,22 +11,28 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.thesis.application.R;
 import com.thesis.application.activities.ThesisActivity;
 import com.thesis.application.fragments.DeviceDetailFragment;
+import com.thesis.application.handler.FileInformation;
+import com.thesis.application.handler.MethodHandler;
 import com.thesis.application.handler.SharedPreferencesHandler;
 import com.thesis.application.serializable.WiFiTransferModal;
 import com.thesis.application.services.FileTransferService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 
 /**
@@ -35,19 +41,20 @@ import java.net.Socket;
 public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
     private Context context;
-    private TextView statusText;
     private String extension;
     private String key;
     private File encryptedFile;
     private Long receivedFileLength;
     private int port;
     public static Handler handler;
+    private boolean isDataTransfer;
+    private FileInformation info;
 
 
-    public FileServerAsyncTask(Context context, View statusText, int port){
+    public FileServerAsyncTask(Context context,int port){
         this.context = context;
-        this.statusText = (TextView)statusText;
         this.port = port;
+        this.info = new FileInformation();
         this.handler = new Handler();
         if(DeviceDetailFragment.staticProgressDialog == null){
             DeviceDetailFragment.staticProgressDialog = new ProgressDialog(this.context, ProgressDialog.THEME_HOLO_LIGHT);
@@ -58,7 +65,6 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
     @Override
     protected void onPreExecute() {
         //super.onPreExecute();
-        statusText.setText("Opening a server socket");
         if(DeviceDetailFragment.staticProgressDialog == null){
             DeviceDetailFragment.staticProgressDialog = new ProgressDialog(this.context, ProgressDialog.THEME_HOLO_LIGHT);
         }
@@ -85,8 +91,11 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
             try {
                 transferObject = (WiFiTransferModal) objectInputStream.readObject();
 
+
                 Log.d(ThesisActivity.TAG, "Received File Len: "+ transferObject.getFileName());
                 inetAddrss = transferObject.getInetAddress();
+                isDataTransfer = transferObject.getIsDataTransfer();
+
                 Log.v(ThesisActivity.TAG, "File Transfer InetAddress: "+ inetAddrss);
 
                 if(inetAddrss != null && inetAddrss.equalsIgnoreCase(FileTransferService.InetAddress)){
@@ -97,6 +106,25 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
                     objectInputStream.close();
                     serverSocket.close();
                     return "clientIPDetection";
+                }else if(inetAddrss != null && inetAddrss.equalsIgnoreCase(FileTransferService.RequestInformationFile)){
+                    objectInputStream.close();
+                    serverSocket.close();
+                    return FileTransferService.RequestInformationFile;
+                }else if(!isDataTransfer){
+
+                    this.receivedFileLength = transferObject.getFileLength();
+                    InputStream inputStream = clientSocket.getInputStream();
+                    OutputStream outputStream = new ByteArrayOutputStream();
+                    DeviceDetailFragment.copyFile(inputStream, outputStream, receivedFileLength);
+
+                    Log.d("Received:", "Information File ");
+
+                    String jsonString = outputStream.toString();
+                    Log.v("Information File: ",jsonString);
+                    SharedPreferencesHandler.setStringValues(context, MethodHandler.FILEINFORMSTION, jsonString);
+                    objectInputStream.close();
+                    serverSocket.close();
+                    return MethodHandler.FILEINFORMSTION;
                 }
 
 
@@ -120,8 +148,18 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
 
             ////////////////////////////////////////////////////////////////////////////////////////
-            final File f = new File(Environment.getExternalStorageDirectory() + "/thesis/"
-                    + context.getPackageName() + "-thesisWork:"+System.currentTimeMillis()+"-" + transferObject.getFileName());
+
+
+            String jsonString = transferObject.getInfo();
+            SharedPreferencesHandler.setStringValues(context, MethodHandler.CHUNKFILEINFORMATION, jsonString);
+            Log.d("Received Chunk: ",jsonString);
+
+            info = (FileInformation)MethodHandler.convertJsonStringToInfoObject(jsonString);
+
+            int i = info.getFileName().lastIndexOf(".");
+            String name = info.getFileName().substring(0,i);
+
+            final File f = new File(MethodHandler.ChunkFilesDirectory+"/"+name+"/" + transferObject.getFileName());
 
             File dirs = new File(f.getParent());
             if(!dirs.exists()) dirs.mkdirs();
@@ -139,15 +177,16 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
             serverSocket.close();
 
             this.extension = transferObject.getFileName();
+
             this.encryptedFile = f;
 
             return f.getAbsolutePath();
 
         } catch (IOException e) {
             Log.e(ThesisActivity.TAG, e.getMessage());
+            return null;
         }
 
-        return null;
     }
 
     @Override
@@ -156,22 +195,69 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
 
         if( result != null){
             if(!result.equalsIgnoreCase("clientIPDetection")){
-                statusText.setText("File copied: "+ result);
-                Intent intent = new Intent();
-                intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.parse("file://"+result), "image/*");
-                context.startActivity(intent);
-            }
-            else{
-                FileServerAsyncTask fileServerAsyncTask = new FileServerAsyncTask(context, statusText, FileTransferService.PORT);
-                if(fileServerAsyncTask!= null){
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                        fileServerAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{ null});
+
+                if(result.equalsIgnoreCase(MethodHandler.FILEINFORMSTION)){
+                    ArrayList<FileInformation> receivedInformation = new ArrayList<>();
+                    ArrayList<FileInformation> originalInformation = new ArrayList<>();
+
+                    String jsonString = SharedPreferencesHandler.getStringValue(context,MethodHandler.FILEINFORMSTION);
+                    Log.d("Received Info File: ",jsonString);
+                    receivedInformation = (ArrayList<FileInformation>) MethodHandler.convertJsonStringToInfoObjectArray(jsonString);
+                    originalInformation = MethodHandler.readInformationFile();
+                    jsonString = MethodHandler.convertObjectToJsonString(MethodHandler.getChangeInformation(originalInformation,receivedInformation));
+                    Log.d("Chunk File To Send: ",jsonString);
+
+                    SharedPreferencesHandler.setStringValues(context, MethodHandler.CHUNKFILETOSEND, jsonString);
+
+                    Toast.makeText(context,"Information File Received",Toast.LENGTH_LONG);
+
+                    Log.v("Chunk File:","Send Starting...");
+                    DeviceDetailFragment.sendchunkFilesSequencially(context);
+
+
+                }else if(result.equalsIgnoreCase(FileTransferService.RequestInformationFile)){
+
+                    Toast.makeText(context,"Received Information File Request",Toast.LENGTH_LONG);
+                    Log.d("Received: ","Information File Request");
+                    ArrayList<FileInformation> fileInformation = MethodHandler.readInformationFile();
+                    String filePath = MethodHandler.InformationFilePath;
+                    int i = filePath.lastIndexOf("/");
+                    String fileName = filePath.substring(0, i);
+                    String jsonString = MethodHandler.convertObjectToJsonString(fileInformation);
+                    Long fileLength = Long.valueOf(jsonString.length());
+                    Toast.makeText(context,"Information File Send",Toast.LENGTH_LONG);
+                    Log.d("Information File Send: ", jsonString);
+                    DeviceDetailFragment.sendData(context, filePath, fileName, fileLength, false, jsonString);
+
+                }else{
+
+
+                    ArrayList<FileInformation> fileInformation = new ArrayList<>();
+                    fileInformation = MethodHandler.readInformationFile();
+                    String jsonString = SharedPreferencesHandler.getStringValue(context, MethodHandler.CHUNKFILEINFORMATION);
+                    FileInformation info = new FileInformation();
+                    info = (FileInformation)MethodHandler.convertJsonStringToInfoObject(jsonString);
+
+                    if(fileInformation == null){
+                        fileInformation.add(info);
                     }else{
-                        fileServerAsyncTask.execute();
+                        fileInformation = MethodHandler.updateReceivedChunk(fileInformation,info);
                     }
+                    MethodHandler.writeInformationFile(fileInformation);
+
+                    Toast.makeText(context,"Chunk File Received",Toast.LENGTH_LONG);
+
                 }
+
+                //Intent intent = new Intent();
+                //intent.setAction(android.content.Intent.ACTION_VIEW);
+                //intent.setDataAndType(Uri.parse("file://"+result), "image/*");
+                //context.startActivity(intent);
             }
+
+            DeviceDetailFragment.runServer(context);
         }
+
+
     }
 }
