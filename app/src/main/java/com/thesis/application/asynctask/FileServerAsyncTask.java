@@ -245,7 +245,14 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
                     }
                     MethodHandler.writeInformationFile(fileInformation);
 
-                    Toast.makeText(context,"Chunk File Received",Toast.LENGTH_LONG);
+                    //Toast.makeText(context,"Chunk File Received",Toast.LENGTH_LONG);
+                    final Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(context,"Chunk File Received",Toast.LENGTH_LONG);
+                        }
+                    };
+                    handler.post(r);
 
                 }
 
