@@ -20,9 +20,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.thesis.application.asynctask.FileCopyAsyncTask;
 import com.thesis.application.asynctask.FileSendAsyncTask;
 import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
 import com.thesis.application.handler.FileInformation;
@@ -36,6 +39,9 @@ import com.thesis.application.asynctask.FileServerAsyncTask;
 import com.thesis.application.interfaces.DeviceActionListener;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -92,6 +98,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             @Override
             public void onClick(View v) {
                 ((DeviceActionListener)getActivity()).disconnect();
+                contentView.findViewById(R.id.btnDisconnect).setVisibility(View.GONE);
             }
         });
 
@@ -116,6 +123,20 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
             }
         });
+
+        contentView.findViewById(R.id.btnSelectSeedFile).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Toast.makeText(getActivity(),"Not Implemented",Toast.LENGTH_LONG).show();
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(intent, CHOOSE_FILE_RESULT_CODE );
+
+
+            }
+        });
+
 
         return contentView;
     }
@@ -217,7 +238,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
             if(host != null && subPort != -1){
                 String send = "Sending: Information File";
-                if(!isDataTransfer) DeviceDetailFragment.showProgress(send);
+                if(!isDataTransfer) DeviceDetailFragment.showProgress(context,send);
                 Log.d("Sending :","From Send Function");
                 context.startService(serviceIntent);
             }else{
@@ -230,11 +251,32 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             dismissProgressDialog();
             Toast.makeText(context,"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
         }
+
+        /*String isSend = SharedPreferencesHandler.getStringValue(context,MethodHandler.IsFileSend);
+
+        if(isSend.equalsIgnoreCase("true")){
+
+            SharedPreferencesHandler.setStringValues(context,MethodHandler.IsFileSend,"false");
+
+            FirstConnectionMessageAsyncTask firstObj = new FirstConnectionMessageAsyncTask(context, FileTransferService.RequestInformationFile);
+            if (firstObj != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    firstObj.executeOnExecutor(
+                            AsyncTask.THREAD_POOL_EXECUTOR,
+                            new String[] { null });
+                } else
+                    firstObj.execute();
+            }
+
+        }*/
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         //super.onActivityResult(requestCode, resultCode, data);
+
+        //dismissProgressDialog();
+
         if(resultCode == getActivity().RESULT_OK){
             Uri uri = data.getData();
             String selectedFilePath = uri.getPath();
@@ -246,23 +288,35 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 e.printStackTrace();
             }
             if(selectedFilePath != null){
-
-                    //URI path = new URI(selectedFilePath);
-                    //File f = new File(path);
-                    //Log.d(ThesisActivity.TAG,"File Path: "+ path);
-
-                    File f = new File(selectedFilePath);
-                    Log.d(ThesisActivity.TAG,"File Path: "+ selectedFilePath);
-
-                    Long fileLength = f.length();
-                    ActualFileLength = fileLength;
-                    try {
-                        extension = f.getName();
-                        Log.e("Name of File-> ", "" + extension);
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                        e.printStackTrace();
+                FileCopyAsyncTask firstObj = new FileCopyAsyncTask(getActivity(), selectedFilePath);
+                if (firstObj != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        firstObj.executeOnExecutor(
+                            AsyncTask.THREAD_POOL_EXECUTOR,
+                                new String[] { null });
+                        } else
+                            firstObj.execute();
                     }
+                Log.d("File Copied","Location: thesis/files");
+
+                ArrayList<FileInformation> informationFile = new ArrayList<>();
+                ArrayList<FileInformation> informationFileList = new ArrayList<>();
+
+                informationFile = MethodHandler.readInformationFile();
+                informationFileList = MethodHandler.readFileList();
+
+
+                if(informationFileList != null){
+                    if(informationFile == null ) MethodHandler.writeInformationFile(informationFileList);
+                    else{
+                        informationFile = MethodHandler.updateInformationFile(informationFile,informationFileList);
+                        if(informationFile!=null) MethodHandler.writeInformationFile(informationFile);
+                        else{
+                            Toast.makeText(getActivity(),"No File to send",Toast.LENGTH_LONG);
+                        }
+                    }
+                }
+
 
             }
             else{
@@ -270,64 +324,11 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 return;
             }
 
-
-
-
-            TextView statusText = (TextView) contentView.findViewById(R.id.tvStatusText);
-            statusText.setText("Sending: "+ uri);
-            Log.d(ThesisActivity.TAG, "Intent--------" +uri);
-
-            Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-            serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-            serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-
-            //////////////////////////////////////////////////////////////////////////////////////////////
-
-            String clientIP = SharedPreferencesHandler.getStringValue(getActivity(),"WifiClientIp");
-            //String clientIP = ClientIP;
-            Log.d(ThesisActivity.TAG, "Client IP SharedPre: "+ clientIP);
-
-            String ownerIP = SharedPreferencesHandler.getStringValue(getActivity(), "GroupOwnerAddress");
-
-            if(ownerIP != null && ownerIP.length()>0){
-
-                String host = null;
-                int subPort = -1;
-                String serverBool = SharedPreferencesHandler.getStringValue(getActivity(), "ServerBoolean");
-
-                if(serverBool != null && !serverBool.equals("") && serverBool.equalsIgnoreCase("true")){
-                    if(clientIP != null && !clientIP.equals("")){
-                        host = clientIP;
-                        subPort = FileTransferService.PORT;
-                        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, clientIP);
-                        Log.d(ThesisActivity.TAG, "Client IP SErver: " + clientIP);
-                    }
-                }else{
-                    host = ownerIP;
-                    subPort = FileTransferService.PORT;
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS, ownerIP);
-                }
-
-                serviceIntent.putExtra(FileTransferService.Extension, extension);
-                serviceIntent.putExtra(FileTransferService.FileLength, ActualFileLength+"");
-                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, FileTransferService.PORT);
-                if(host != null && subPort != -1){
-                    showProgress("Sending...");
-                    getActivity().startService(serviceIntent);
-                }else{
-                    dismissProgressDialog();
-                    Toast.makeText(getActivity(),"Host address not found. Please Reeee-connect.", Toast.LENGTH_LONG).show();
-                }
-
-
-            }else{
-                dismissProgressDialog();
-                Toast.makeText(getActivity(),"Host address not found. Please connect again", Toast.LENGTH_LONG).show();
-            }
         }
         else{
             Toast.makeText(getActivity(), "Cancelled Request",Toast.LENGTH_LONG);
         }
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////
     }
@@ -349,6 +350,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         if(progressDialog!=null && progressDialog.isShowing()){
             progressDialog.dismiss();
         }
+
+        //DeviceListFragment deviceListFragment = (DeviceListFragment)getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+        //ThesisActivity.showHideFragment(deviceListFragment, "hide");
 
         this.info = info;
         this.getView().setVisibility(View.VISIBLE);
@@ -424,24 +428,38 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
 
         contentView.findViewById(R.id.btnConnect).setVisibility(View.GONE);
+        contentView.findViewById(R.id.btnDisconnect).setVisibility(View.VISIBLE);
     }
 
     public void showDetails(WifiP2pDevice device){
         this.device = device;
         this.getView().setVisibility(View.VISIBLE);
-        TextView textView = (TextView) contentView.findViewById(R.id.tvPeerDeviceAddress);
-        textView.setText(device.deviceAddress);
-        textView = (TextView) contentView.findViewById(R.id.tvPeerDeviceInfo);
-        textView.setText(device.toString());
+        //TextView textView = (TextView) contentView.findViewById(R.id.tvPeerDeviceAddress);
+        //textView.setText(device.deviceAddress);
+        //TextView  textView = (TextView) contentView.findViewById(R.id.tvPeerDeviceInfo);
+        //textView.setText(device.toString());
+
+        TextView  textView = (TextView) contentView.findViewById(R.id.tvDeviceName);
+        textView.setText(device.deviceName);
+
+        textView = (TextView) contentView.findViewById(R.id.tvDeviceDetails);
+        textView.setText(DeviceListFragment.getDeviceStatus(device.status));
+        if(DeviceListFragment.getDeviceStatus(device.status).equalsIgnoreCase("available")){
+            textView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }
+        else if(DeviceListFragment.getDeviceStatus(device.status).equalsIgnoreCase("connected")){
+            textView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }else textView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+
     }
 
     public void resetViews(){
         contentView.findViewById(R.id.btnConnect).setVisibility(View.VISIBLE);
-        TextView view = (TextView)contentView.findViewById(R.id.tvPeerDeviceAddress);
-        view.setText("");
-        view = (TextView) contentView.findViewById(R.id.tvPeerDeviceInfo);
-        view.setText("");
-        view = (TextView) contentView.findViewById(R.id.tvGroupOwner);
+        //TextView view = (TextView)contentView.findViewById(R.id.tvPeerDeviceAddress);
+        //view.setText("");
+        //TextView  view = (TextView) contentView.findViewById(R.id.tvPeerDeviceInfo);
+        //view.setText("");
+        TextView  view = (TextView) contentView.findViewById(R.id.tvGroupOwner);
         view.setText("");
         view = (TextView) contentView.findViewById(R.id.tvGroupIp);
         view.setText("");
@@ -488,6 +506,12 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             long endTime=System.currentTimeMillis()-startTime;
             Log.v("","Time taken to transfer all bytes is : "+endTime);
 
+            if(staticProgressDialog != null){
+                if(staticProgressDialog.isShowing()){
+                    staticProgressDialog.dismiss();
+                }
+            }
+
         } catch (IOException e) {
             Log.d(ThesisActivity.TAG, e.toString());
             return false;
@@ -495,27 +519,27 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         return true;
     }
 
-    public static void showProgress(final String task) {
+    public static void showProgress(Context context, final String task) {
+        dismissProgressDialog();
         if (staticProgressDialog == null) {
-            staticProgressDialog = new ProgressDialog(GlobalApplication.getGlobalAppContext(),
+            staticProgressDialog = new ProgressDialog(context,
                     ProgressDialog.THEME_HOLO_LIGHT);
         }
         Handler handle = new Handler();
         final Runnable s = new Runnable() {
-
             public void run() {
-                staticProgressDialog.setMessage(task);
-                staticProgressDialog.setIndeterminate(false);
-                staticProgressDialog.setMax(100);
-                staticProgressDialog.setProgressNumberFormat(null);
-                staticProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                staticProgressDialog.show();
+                DeviceDetailFragment.staticProgressDialog.setMessage(task);
+                DeviceDetailFragment.staticProgressDialog.setIndeterminate(false);
+                DeviceDetailFragment.staticProgressDialog.setMax(100);
+                DeviceDetailFragment.staticProgressDialog.setProgress(0);
+                DeviceDetailFragment.staticProgressDialog.setProgressNumberFormat(null);
+                DeviceDetailFragment.staticProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                DeviceDetailFragment.staticProgressDialog.show();
             }
         };
         handle.post(s);
+
     }
-
-
 
     public static void dismissProgressDialog(){
         try{
@@ -528,9 +552,5 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             e.printStackTrace();
         }
     }
-
-
-
-
 
 }

@@ -212,6 +212,7 @@ public class MethodHandler {
                 File f = new File(newFileName);
                 File dirs = new File(f.getParent());
                 if(!dirs.exists()) dirs.mkdirs();
+                createFolder(f.getParent());
                 f.createNewFile();
 
                 filePart = new FileOutputStream(f);
@@ -275,7 +276,14 @@ public class MethodHandler {
     public static ArrayList<FileInformation> readInformationFile(){
         String filePath = Environment.getExternalStorageDirectory() + "/thesis/information.txt";
         File ff = new File(filePath);
+        File f = new File(ff.getParent());
+        if(!f.exists()) f.mkdirs();
         MethodHandler.createFolder(ff.getParent());
+
+        if(!ff.exists() ){
+            Log.d("Number of Files:","Null");
+            return null;
+        }
 
         ArrayList<FileInformation> fileInformation = new ArrayList<>();
         try {
@@ -292,11 +300,19 @@ public class MethodHandler {
     public static ArrayList<FileInformation> readFileList(){
         String filePath = Environment.getExternalStorageDirectory() + "/thesis/files";
         File ff = new File(filePath);
+
+        File f = new File(ff.getParent());
+        if(!f.exists()) f.mkdirs();
+        if(!ff.exists()) ff.mkdirs();
         MethodHandler.createFolder(ff.getParent());
+        MethodHandler.createFolder(filePath);
 
         File file[] = MethodHandler.listOfFilesInDirectory(filePath);
         if(file != null )Log.d("Number of Files:",""+file.length);
-        else Log.d("Number of Files:","Null");
+        else{
+            Log.d("Number of Files:","Null");
+            return null;
+        }
 
 
         ArrayList<FileInformation> fileInformations = new ArrayList<>();
@@ -329,6 +345,8 @@ public class MethodHandler {
             String jsonString = MethodHandler.convertObjectToJsonString(fileInformations);
             String filePath = Environment.getExternalStorageDirectory() + "/thesis/information.txt";
             File ff = new File(filePath);
+            File f = new File(ff.getParent());
+            if(!f.exists()) f.mkdirs();
             MethodHandler.createFolder(ff.getParent());
             MethodHandler.writeJsonStringToFIle(jsonString,filePath);
             Log.d("File Directory Write:",jsonString);
@@ -341,6 +359,10 @@ public class MethodHandler {
     public static boolean writeFileFromChunkFiles(String fileName){
         String filePath = Environment.getExternalStorageDirectory() + "/thesis/chunkfiles";
         File ff = new File(filePath);
+        File f = new File(ff.getParent());
+        if(!f.exists()) f.mkdirs();
+        if(!ff.exists()) ff.mkdirs();
+        MethodHandler.createFolder(filePath);
         MethodHandler.createFolder(ff.getParent());
 
         File margefile[] = MethodHandler.listOfFilesInDirectory(filePath);

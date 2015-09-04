@@ -29,4 +29,11 @@ repositories {
 dependencies {
     compile 'com.google.code.gson:gson:2.3.1'
 }
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.github.navasmdc:MaterialDesign:1.5@aar'
+}
 

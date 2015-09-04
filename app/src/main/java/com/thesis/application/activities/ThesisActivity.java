@@ -1,18 +1,25 @@
 package com.thesis.application.activities;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.thesis.application.R;
@@ -43,6 +50,7 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_thesis);
 
+        getActionBar().show();
 
         ArrayList<FileInformation> informationFile = new ArrayList<>();
         ArrayList<FileInformation> informationFileList = new ArrayList<>();
@@ -55,7 +63,10 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
             if(informationFile == null ) MethodHandler.writeInformationFile(informationFileList);
             else{
                 informationFile = MethodHandler.updateInformationFile(informationFile,informationFileList);
-                MethodHandler.writeInformationFile(informationFile);
+                if(informationFile!=null) MethodHandler.writeInformationFile(informationFile);
+                else{
+                    Toast.makeText(this,"No File to send",Toast.LENGTH_LONG);
+                }
             }
         }
 
@@ -69,6 +80,9 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
     }
+
+
+
 
     @Override
     protected void onResume() {
@@ -100,11 +114,11 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
                     WifiManager wifiManager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
                     if(wifiManager.isWifiEnabled()){
                         wifiManager.setWifiEnabled(false);
-                        item.setIcon(getResources().getDrawable(android.R.drawable.button_onoff_indicator_off));
+                        item.setIcon(getResources().getDrawable(R.drawable.ic_power_settings_new_black_24dp));
                         isWifiEnabled = false;
                     }else{
                         wifiManager.setWifiEnabled(true);
-                        item.setIcon(getResources().getDrawable(android.R.drawable.button_onoff_indicator_on));
+                        item.setIcon(getResources().getDrawable(R.drawable.ic_power_settings_new_white_24dp));
                         isWifiEnabled = true;
                     }
                 }else {
@@ -121,16 +135,27 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
                 }
 
                 final DeviceListFragment deviceListFragment = (DeviceListFragment)getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+                //DisplayMetrics dm = new DisplayMetrics();
+                //getWindowManager().getDefaultDisplay().getMetrics(dm);
+                //int width=dm.widthPixels;
+                //int height=dm.heightPixels;
+                //int dens=dm.densityDpi;
+                //ViewGroup.LayoutParams params = deviceListFragment.getView().getLayoutParams();
+                //params.height = dm.heightPixels;
+                //deviceListFragment.getView().setLayoutParams();
+
+
+
                 deviceListFragment.onInitiateDiscovery();
                 manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(ThesisActivity.this,"Descovery Innitated...",Toast.LENGTH_LONG).show();
+                        Toast.makeText(ThesisActivity.this,"Discovery Initiated...",Toast.LENGTH_LONG).show();
                     }
 
                     @Override
                     public void onFailure(int reason) {
-                        Toast.makeText(ThesisActivity.this, "Descovery Failed : " + reason ,Toast.LENGTH_LONG).show();
+                        Toast.makeText(ThesisActivity.this, "Discovery Failed : " + reason ,Toast.LENGTH_LONG).show();
                     }
                 });
 
@@ -157,15 +182,20 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
     @Override
     public void showDetails(WifiP2pDevice device) {
         DeviceDetailFragment deviceDetailFragment = (DeviceDetailFragment) getFragmentManager().findFragmentById(R.id.fragmentDeviceDetail);
+        //DeviceListFragment deviceListFragment = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+        //showHideFragment(deviceListFragment,"hide");
         deviceDetailFragment.showDetails(device);
     }
 
     @Override
     public void cancelDisconnect() {
+
         final DeviceListFragment deviceListFragment = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
         if(deviceListFragment.getDevice() == null && deviceListFragment.getDevice().status == WifiP2pDevice.CONNECTED) {
             disconnect();
         } else if(deviceListFragment.getDevice().status == WifiP2pDevice.AVAILABLE || deviceListFragment.getDevice().status == WifiP2pDevice.INVITED){
+
+
             manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onSuccess() {
@@ -182,6 +212,10 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
 
     @Override
     public void connect(WifiP2pConfig config) {
+
+        //DeviceListFragment deviceListFragment = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+        //showHideFragment(deviceListFragment,"hide");
+
         manager.connect(channel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -197,6 +231,10 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
 
     @Override
     public void disconnect() {
+
+        //DeviceListFragment deviceListFragment = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.fragmentDeviceList);
+        //showHideFragment(deviceListFragment,"show");
+
         final DeviceDetailFragment fragment = (DeviceDetailFragment)getFragmentManager().findFragmentById(R.id.fragmentDeviceDetail);
 
         manager.removeGroup(channel,new WifiP2pManager.ActionListener() {
@@ -227,4 +265,23 @@ public class ThesisActivity extends Activity implements WifiP2pManager.ChannelLi
             deviceDetailFragment.resetViews();
         }
     }
+
+/*
+    public static void showHideFragment(final Fragment fragment, String status){
+
+        FragmentTransaction ft = fragment.getFragmentManager().beginTransaction();
+        ft.setCustomAnimations(android.R.animator.fade_in,
+                android.R.animator.fade_out);
+
+        if (status.equalsIgnoreCase("show")) {
+            ft.show(fragment);
+            Log.d("hidden","Show");
+        } else {
+            ft.hide(fragment);
+            Log.d("Shown","Hide");
+        }
+
+        ft.commit();
+    }
+*/
 }

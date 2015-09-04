@@ -6,11 +6,15 @@ import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
+import android.os.Build;
 
 import com.thesis.application.R;
 import com.thesis.application.activities.ThesisActivity;
+import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.fragments.DeviceListFragment;
+import com.thesis.application.services.FileTransferService;
 
 /**
  * Created by bahar61119 on 7/12/2015.
@@ -72,6 +76,8 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
             deviceListFragment.updateThisDevice((WifiP2pDevice)intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
 
         }
+
+
 
     }
 }

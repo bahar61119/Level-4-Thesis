@@ -2,49 +2,105 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    android:orientation = "horizontal"
+    android:orientation = "vertical"
     android:visibility="gone"
-    android:background="@drawable/details_view">
+    android:background="@android:color/white">
+
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connected Device"
+            android:textColor="@android:color/holo_blue_bright"
+            android:textSize="24dp"/>
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/holo_green_light" />
 
-            <Button
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/activatedBackgroundIndicator"
+            android:orientation="horizontal">
+
+            <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/connect_peer_button"
+                android:id="@+id/ivDeviceIcon"
+                android:layout_margin="2dp"
+                android:src="@drawable/ic_phone_android_black_48dp"/>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/tvDeviceName"
+                    android:layout_gravity="center_vertical"
+                    android:textSize="16dp"/>
+
+                <TextView
+                    android:id="@+id/tvDeviceDetails"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal"
+            android:paddingBottom="10dp"
+            android:paddingTop="10dp">
+            <Button
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/ic_cast_black_48dp"
+                android:layout_alignParentLeft="true"
                 android:id="@+id/btnConnect" />
 
             <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/disconnect_peer_button"
-                android:id="@+id/btnDisconnect" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/ic_cancel_black_48dp"
+                android:id="@+id/btnDisconnect"
+                android:visibility="gone"/>
 
             <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/get_file_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:id="@+id/btnSelectSeedFile"
+                android:layout_centerInParent="true"
+                android:background="@drawable/ic_add_box_black_48dp"/>
+
+            <Button
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:id="@+id/btnGallery"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/ic_send_black_48dp"
                 android:visibility="gone"/>
-        </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/tvPeerDeviceAddress" />
+        </RelativeLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/tvPeerDeviceInfo" />
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/holo_green_light" />
 
         <TextView
             android:layout_width="match_parent"
@@ -55,6 +111,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/tvGroupIp" />
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/holo_green_light" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -64,7 +127,7 @@
         android:id="@+id/llStatusBar"
         android:layout_gravity="bottom"
         android:layout_marginBottom="3dp"
-        android:background="@android:color/background_dark">
+        android:background="@android:color/white">
 
         <TextView
             android:layout_width="wrap_content"

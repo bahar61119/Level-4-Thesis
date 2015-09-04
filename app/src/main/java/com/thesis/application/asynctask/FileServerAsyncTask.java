@@ -135,7 +135,7 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
             final Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    DeviceDetailFragment.staticProgressDialog.setMessage("Reveiving...");
+                    DeviceDetailFragment.staticProgressDialog.setMessage("Receiving...");
                     DeviceDetailFragment.staticProgressDialog.setIndeterminate(false);
                     DeviceDetailFragment.staticProgressDialog.setMax(100);
                     DeviceDetailFragment.staticProgressDialog.setProgress(0);
@@ -253,6 +253,21 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
                         }
                     };
                     handler.post(r);
+                    ///////////////////////////////////////////////////////////////////////////////////////////
+
+                    fileInformation = MethodHandler.readInformationFile();
+                    String filePath = MethodHandler.InformationFilePath;
+                    int i = filePath.lastIndexOf("/");
+                    String fileName = filePath.substring(0, i);
+                    jsonString = MethodHandler.convertObjectToJsonString(fileInformation);
+                    Long fileLength = Long.valueOf(jsonString.length());
+                    Toast.makeText(context,"Information File Send",Toast.LENGTH_LONG);
+                    Log.d("Information File Send: ", jsonString);
+                    DeviceDetailFragment.sendData(context, filePath, fileName, fileLength, false, jsonString);
+
+                    /////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
                 }
 

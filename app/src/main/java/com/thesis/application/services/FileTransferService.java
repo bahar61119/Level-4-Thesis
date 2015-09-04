@@ -6,12 +6,14 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.thesis.application.activities.ThesisActivity;
+import com.thesis.application.asynctask.FirstConnectionMessageAsyncTask;
 import com.thesis.application.fragments.DeviceDetailFragment;
 import com.thesis.application.handler.FileInformation;
 import com.thesis.application.handler.MethodHandler;
@@ -51,11 +53,12 @@ public class FileTransferService extends IntentService {
     public static int PORT = 8988;
     public static String InetAddress = "inetaddress";
     public static final String RequestInformationFile = "requestinformationfile";
-    public static final int ByteSize = 512;
+    public static final int ByteSize = 128;
     public static final String DATAINFORMATION = "data";
     public static final String IsDataTranser = "isdatatransfer";
     public static final String Extension = "extension";
     public static final String FileLength = "filelength";
+    public static final String ChunkSend = "chunksend";
 
 
 
@@ -227,5 +230,6 @@ public class FileTransferService extends IntentService {
             }
         }
         SharedPreferencesHandler.setStringValues(context, MethodHandler.IsFileSend, "true");
+
     }
 }

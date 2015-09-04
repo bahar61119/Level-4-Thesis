@@ -1,5 +1,6 @@
 package com.thesis.application.fragments;
 
+import android.app.FragmentManager;
 import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +34,7 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
     private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     private WifiP2pDevice device;
 
-    private static String getDeviceStatus(int deviceStatus) {
+    protected static String getDeviceStatus(int deviceStatus) {
         switch (deviceStatus) {
             case WifiP2pDevice.AVAILABLE:
                 return "Available";
@@ -84,6 +86,7 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
         }
     }
 
+
     public WifiP2pDevice getDevice(){
         return device;
     }
@@ -98,6 +101,12 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
 
         TextView deviceName = (TextView) contentView.findViewById(R.id.tvMyDeviceName);
         TextView deviceStatus = (TextView) contentView.findViewById(R.id.tvMyDeviceStatus);
+        if(getDeviceStatus(device.status).equalsIgnoreCase("available")){
+            deviceStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }else if(getDeviceStatus(device.status).equalsIgnoreCase("connected")){
+            deviceStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }
+        else deviceStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
         deviceName.setText(device.deviceName);
         deviceStatus.setText(getDeviceStatus(device.status));
     }
@@ -106,7 +115,7 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
-        progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel", "Finding Peers", true, true, new DialogInterface.OnCancelListener() {
+        progressDialog = ProgressDialog.show(getActivity(), "Searching for devices", "Please Wait...", true, true, new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
 
@@ -130,6 +139,8 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
+
+
             View view = convertView;
             if (view == null) {
                 LayoutInflater layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -140,11 +151,20 @@ public class DeviceListFragment extends ListFragment implements WifiP2pManager.P
             if (device != null) {
                 TextView top = (TextView) view.findViewById(R.id.tvDeviceName);
                 TextView bottom = (TextView) view.findViewById(R.id.tvDeviceDetails);
+
+
                 if (top != null) {
                     top.setText(device.deviceName);
                 }
                 if (bottom != null) {
                     bottom.setText(getDeviceStatus(device.status));
+                    if(getDeviceStatus(device.status).equalsIgnoreCase("available")){
+                        bottom.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                    }
+                    else if(getDeviceStatus(device.status).equalsIgnoreCase("connected")){
+                        bottom.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                    }else bottom.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+
                 }
             }
 

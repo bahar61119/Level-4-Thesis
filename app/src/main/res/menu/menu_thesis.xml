@@ -2,13 +2,13 @@
 
     <item
         android:id="@+id/miWifiDirectEnable"
-        android:icon="@android:drawable/button_onoff_indicator_off"
+        android:icon="@drawable/ic_power_settings_new_black_24dp"
         android:title="@string/enable_p2p_button"
         android:showAsAction="always"
         />
     <item
         android:id = "@+id/miSearchPeers"
-        android:icon="@drawable/abc_ic_search_api_mtrl_alpha"
+        android:icon="@drawable/ic_search_black_24dp"
         android:title="@string/discover_peers_button"
         android:showAsAction="always"
         />

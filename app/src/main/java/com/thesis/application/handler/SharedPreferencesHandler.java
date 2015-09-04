@@ -53,5 +53,4 @@ public class SharedPreferencesHandler {
         editor.putLong(key, DataToSave);
         editor.commit();
     }
-
 }

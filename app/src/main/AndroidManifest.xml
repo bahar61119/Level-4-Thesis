@@ -23,14 +23,12 @@
         android:name=".FileTransferService"
         android:enabled="true" />
 
-    <android:uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="18" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/appicon"
-        android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.Light">
         <activity
             android:name=".activities.ThesisActivity"
             android:label="@string/app_name" >

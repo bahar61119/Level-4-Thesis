@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/label_me"/>
+        android:text="@string/label_me"
+        android:textColor="@android:color/holo_blue_bright"
+        android:textSize="24dp"/>
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
@@ -14,9 +17,9 @@
         android:background="@android:color/holo_green_light" />
 
     <LinearLayout
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="?android:attr/listPreferredItemHeight"
+        android:layout_height="wrap_content"
         android:background= "?android:attr/activatedBackgroundIndicator"
         android:padding="3dp">
 
@@ -25,7 +28,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/ivMyDeviceIcon"
             android:layout_marginRight="2dp"
-            android:src= "@android:drawable/sym_def_app_icon"/>
+            android:src= "@drawable/ic_phone_android_black_48dp"/>
 
         <LinearLayout
             android:orientation="vertical"
@@ -36,7 +39,8 @@
                 android:id="@+id/tvMyDeviceName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"/>
+                android:gravity="center_vertical"
+                android:textSize="16dp"/>
 
             <TextView
                 android:id="@+id/tvMyDeviceStatus"
@@ -45,12 +49,16 @@
                 android:singleLine="true"
                 android:ellipsize="marquee"/>
         </LinearLayout>
+
+
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/label_peers"/>
+        android:text="@string/label_peers"
+        android:textColor="@android:color/holo_blue_bright"
+        android:textSize="24dp"/>
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
@@ -60,9 +68,9 @@
     <ListView
         android:id="@+id/android:list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:drawSelectorOnTop="false"/>
+        android:layout_height="wrap_content"
+        android:layout_weight="10"
+        android:drawSelectorOnTop="true"/>
 
     <TextView
         android:id="@+id/android:empty"

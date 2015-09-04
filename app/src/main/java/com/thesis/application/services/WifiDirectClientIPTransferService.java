@@ -71,7 +71,6 @@ public class WifiDirectClientIPTransferService extends IntentService {
 
                 oos.close();	//close the ObjectOutputStream after sending data.
             } catch (IOException e) {
-                Log.e(ThesisActivity.TAG, e.getMessage());
                 e.printStackTrace();
             } finally {
                 if (socket != null) {
