@@ -46,7 +46,7 @@ and designed a novel strategy for selecting which chunk to select for disseminat
 * Received files are saved in "//thesis/files".
 * Information about received files are saved in "//thesis/information.txt".
 
-#APPLICATION RESULTS
+#IMPLEMENTATION RESULTS
 
 * We calculated the time to receive files
 * Then compared the results with the one we found from our simulation.
