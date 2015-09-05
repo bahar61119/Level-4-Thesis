@@ -1,5 +1,5 @@
 # THESIS : Dissemination of Rich Media Contents in Disruption-tolerant Network
-(Maruf Hasan Zaber, Mehrab Bin Morshed, Md. Habibullah Bin Ismail)
+##(Maruf Hasan Zaber, Mehrab Bin Morshed, Md. Habibullah Bin Ismail)
 
 Dissemination of a media content in an opportunistic network is proportionally related to the capacity of connections. 
 While the assumption, any connection has capacity to transfer data of any size holds true for analytical case, 
