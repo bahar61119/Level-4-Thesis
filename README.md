@@ -38,6 +38,7 @@ and designed a novel strategy for selecting which chunk to select for disseminat
 
 #HOW TO USE THIS APPLICATION
 
+* Minimum API Level 15
 * First you have to enable WifiDirect.
 * Search for peers. 
 * Connect one of the available devices.
