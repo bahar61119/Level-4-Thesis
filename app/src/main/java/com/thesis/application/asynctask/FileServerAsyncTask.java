@@ -49,6 +49,8 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
     public static Handler handler;
     private boolean isDataTransfer;
     private FileInformation info;
+    private long startTime;
+    private long endTime;
 
 
     public FileServerAsyncTask(Context context,int port){
@@ -65,6 +67,7 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
     @Override
     protected void onPreExecute() {
         //super.onPreExecute();
+        startTime=System.currentTimeMillis();
         if(DeviceDetailFragment.staticProgressDialog == null){
             DeviceDetailFragment.staticProgressDialog = new ProgressDialog(this.context, ProgressDialog.THEME_HOLO_LIGHT);
         }
@@ -238,10 +241,14 @@ public class FileServerAsyncTask extends AsyncTask<String, String, String> {
                     FileInformation info = new FileInformation();
                     info = (FileInformation)MethodHandler.convertJsonStringToInfoObject(jsonString);
 
+                    info.setIsReceived(true);
+                    endTime=System.currentTimeMillis()-startTime;
+                    info.addChunkReceivedTimeKeyValue(info.getChunkList().get(0), endTime);
+
                     if(fileInformation == null){
                         fileInformation.add(info);
                     }else{
-                        fileInformation = MethodHandler.updateReceivedChunk(fileInformation,info);
+                        fileInformation = MethodHandler.updateReceivedChunk(context,fileInformation,info);
                     }
                     MethodHandler.writeInformationFile(fileInformation);
 

@@ -1,6 +1,9 @@
 package com.thesis.application.handler;
 
+import android.content.Context;
+
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 /**
  * Created by bahar61119 on 8/31/2015.
@@ -14,6 +17,9 @@ public class FileInformation {
     private int numberOfChunk;
     private boolean completed;
     private ArrayList<Integer> chunkList;
+    private Hashtable<Integer,Long> chunkReceivedTime;
+    private long totalTimeTakenToReceive;
+    private boolean isReceived;
 
     public FileInformation() {
         //this.fileID = null;
@@ -23,10 +29,13 @@ public class FileInformation {
         this.numberOfChunk = 0;
         this.completed = false;
         this.chunkList = new ArrayList<>();
+        this.isReceived = false;
+        this.chunkReceivedTime = new Hashtable<>();
+        this.totalTimeTakenToReceive = 0;
     }
 
     public FileInformation(String fileName, String fileExtension, long fileSize,
-                           int numberOfChunk) {
+                           int numberOfChunk, boolean isReceived) {
         //this.fileID = fileID;
         this.fileName = fileName;
         this.fileExtension = fileExtension;
@@ -34,10 +43,13 @@ public class FileInformation {
         this.numberOfChunk = numberOfChunk;
         this.completed = false;
         this.chunkList = new ArrayList<Integer>();
+        this.isReceived = isReceived;
+        this.chunkReceivedTime = new Hashtable<>();
+        this.totalTimeTakenToReceive = 0;
     }
 
     public FileInformation(String fileName, String fileExtension, long fileSize,
-                           int numberOfChunk, boolean completed) {
+                           int numberOfChunk, boolean completed, boolean isReceived) {
         //this.fileID = fileID;
         this.fileName = fileName;
         this.fileExtension = fileExtension;
@@ -45,10 +57,13 @@ public class FileInformation {
         this.numberOfChunk = numberOfChunk;
         this.completed = completed;
         this.chunkList = new ArrayList<Integer>();
+        this.isReceived = isReceived;
+        this.chunkReceivedTime = new Hashtable<>();
+        this.totalTimeTakenToReceive = 0;
     }
 
     public FileInformation(String fileName, String fileExtension, long fileSize,
-                           int numberOfChunk, boolean completed, ArrayList<Integer> chunkList) {
+                           int numberOfChunk, boolean completed, boolean isReceived, ArrayList<Integer> chunkList) {
         //this.fileID = fileID;
         this.fileName = fileName;
         this.fileExtension = fileExtension;
@@ -56,6 +71,9 @@ public class FileInformation {
         this.numberOfChunk = numberOfChunk;
         this.completed = completed;
         this.chunkList = chunkList;
+        this.isReceived = isReceived;
+        this.chunkReceivedTime = new Hashtable<>();
+        this.totalTimeTakenToReceive = 0;
     }
 
     public void setFileID(String fileID){
@@ -78,8 +96,25 @@ public class FileInformation {
         this.numberOfChunk = numberOfChunk;
     }
 
+    public void addChunkReceivedTimeKeyValue(Integer key, Long value){
+        chunkReceivedTime.put(key,value);
+        totalTimeTakenToReceive += value.longValue();
+    }
+
+    public Long getChunkReceivedTimeValue(Integer key){
+        return chunkReceivedTime.get(key);
+    }
+
     public void setCompleted(boolean completed){
         this.completed = completed;
+    }
+
+    public void setIsReceived(boolean isReceived){
+        this.isReceived = isReceived;
+    }
+
+    public boolean getIsReceived(){
+        return this.isReceived;
     }
 
     public void setChunkList(ArrayList<Integer> chunkList){
@@ -89,6 +124,14 @@ public class FileInformation {
 
     public void addChunkNumber(int number){
         this.chunkList.add(number);
+    }
+
+    public void setChunkReceivedTime(Hashtable<Integer,Long> chunkReceivedTime){
+        this.chunkReceivedTime = chunkReceivedTime;
+    }
+
+    public Hashtable<Integer,Long> getChunkReceivedTime(){
+        return chunkReceivedTime;
     }
 
     public void removeChunkNumber(int index){
@@ -137,6 +180,10 @@ public class FileInformation {
 
     public boolean isChunkCompleted(){
         return getChunkListSize() == getNumberOfChunk();
+    }
+
+    public Long getTotalTimeTakenToReceive(){
+        return totalTimeTakenToReceive;
     }
 
 }

@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.thesis.application.activities.ThesisActivity;
+import com.thesis.application.fragments.DeviceDetailFragment;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 /**
@@ -436,14 +438,16 @@ public class MethodHandler {
                     FileInformation info = originalInformation.get(i);
                     ArrayList<Integer> chunkList = new ArrayList<>();
 
+
                     for(int k=0;k<originalInformation.get(i).getChunkList().size();k++){
                         if(!receivedInformation.get(j).getChunkList().contains(originalInformation.get(i).getChunkList().get(k))){
                             chunkList.add(originalInformation.get(i).getChunkList().get(k));
                         }
                     }
 
-
-                    if(chunkList!=null && chunkList.size()>0) info.setChunkList(chunkList);
+                    if(chunkList!=null && chunkList.size()>0) {
+                        info.setChunkList(chunkList);
+                    }
                     flag = true;
 
                     fileInformations.add(info);
@@ -458,7 +462,7 @@ public class MethodHandler {
         return fileInformations;
     }
 
-    public static ArrayList<FileInformation> updateReceivedChunk(ArrayList<FileInformation> originalInformation, FileInformation receivedChunk){
+    public static ArrayList<FileInformation> updateReceivedChunk(Context context,ArrayList<FileInformation> originalInformation, FileInformation receivedChunk){
         Log.d("Received Chunk: ", receivedChunk.getFileName());
         Log.d("Received Chunk Number: ",""+receivedChunk.getChunkList().get(0));
         boolean flag = false;
@@ -466,6 +470,8 @@ public class MethodHandler {
             if(originalInformation.get(i).getFileName().equalsIgnoreCase(receivedChunk.getFileName())){
                 if(originalInformation.get(i).checkChunkInList(receivedChunk.getChunkList().get(0))) continue;
                 originalInformation.get(i).addChunkNumber(receivedChunk.getChunkList().get(0));
+                originalInformation.get(i).addChunkReceivedTimeKeyValue(receivedChunk.getChunkList().get(0)
+                        , receivedChunk.getChunkReceivedTimeValue(receivedChunk.getChunkList().get(0)));
                 flag = true;
                 Log.d("New Chunk List : ", originalInformation.get(i).getChunkList().toString());
 

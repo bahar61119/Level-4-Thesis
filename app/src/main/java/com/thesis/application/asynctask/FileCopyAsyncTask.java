@@ -56,7 +56,7 @@ public class FileCopyAsyncTask extends AsyncTask<String, String, String> {
         final Runnable r = new Runnable() {
             @Override
             public void run() {
-                DeviceDetailFragment.staticProgressDialog.setMessage("Sending ...");
+                DeviceDetailFragment.staticProgressDialog.setMessage("Copying ...");
                 DeviceDetailFragment.staticProgressDialog.setIndeterminate(false);
                 DeviceDetailFragment.staticProgressDialog.setMax(100);
                 DeviceDetailFragment.staticProgressDialog.setProgress(0);

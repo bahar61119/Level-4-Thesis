@@ -45,7 +45,7 @@ public class FileTransferService extends IntentService {
 
     public static Handler handler;
 
-    public static final int SOCKET_TIMEOUT = 5000;
+    public static final int SOCKET_TIMEOUT = 10000;
     public static final String ACTION_SEND_FILE = "com.thesis.application.SEND_FILE";
     public static final String EXTRAS_FILE_PATH = "file_url";
     public static final String EXTRAS_GROUP_OWNER_ADDRESS = "go_host";
