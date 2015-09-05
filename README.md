@@ -14,10 +14,10 @@ and designed a novel strategy for selecting which chunk to select for disseminat
 * Nodes send chunks to other nodes from deliverable set and vice versa.
 * Exchange continues until both nodes have the union of chunks.
 * Which Chunk to select for sending
-	1.Random –  randomly selected from deliverable set. 
-	2.Round Robin – sequentially selected from deliverable set.
-	3.LDCF –least disseminated chunk in the network selected from deliverable set.
-	4.Epidemic scheme.
+	**1.Random –  randomly selected from deliverable set. 
+	**2.Round Robin – sequentially selected from deliverable set.
+	**3.LDCF –least disseminated chunk in the network selected from deliverable set.
+	**4.Epidemic scheme.
 * Using Opportunistic Network Environment simulator (ONE) four dissemination schemes were simulated.
 * Helsinki City map was used for simulation. 
 * Real-time movement trace of Helsinki City was used.
