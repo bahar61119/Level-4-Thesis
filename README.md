@@ -22,7 +22,7 @@ and designed a novel strategy for selecting which chunk to select for disseminat
 * Helsinki City map was used for simulation. 
 * Real-time movement trace of Helsinki City was used.
 
-#RESULTS
+#SIMULATION RESULTS
 * Simulation was aggregated over 4 different movement-trace and 600 simulation runs.
 * RR first reaches to saturation compared to Random, LDCF and Epidemic scheme.
 * Convergence speeds up by the spreading of infected  nodes.
@@ -33,7 +33,23 @@ and designed a novel strategy for selecting which chunk to select for disseminat
 
 * This android application was built exploiting the seed selection and dissemination schemes.
 * Underlying communication technology was Wi-Fi Direct.
-* We implemented Round Robin in this application.
+* We implemented Round Robin Scheme in this application.
+* This application was developed only for one P2P communication.
+
+#HOW TO USE THIS APPLICATION
+
+* First you have to enable WifiDirect.
+* Search for peers. 
+* Connect one of the available devices.
+* Select Seed Files.
+* Finally Send Files to the connected device.
+* Received files are saved in "//thesis/files".
+* Information about received files are saved in "//thesis/information.txt".
+
+#APPLICATION RESULTS
+
+* We calculated the time to receive files
+* Then compared the results with the one we found from our simulation.
 
 
 
